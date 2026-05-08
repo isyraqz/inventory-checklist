@@ -408,16 +408,8 @@ export default function Dashboard() {
                         <span style={{ color: 'var(--text-hint)' }}>Unassigned</span>
                       )}
                     </td>
-                    <td>
-                      <span className={`badge ${CAT_CLASS[item.category] ?? 'b-other'}`}>
-                        {item.category}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${COND_CLASS[item.condition] ?? 'b-other'}`}>
-                        {item.condition}
-                      </span>
-                    </td>
+                    <td>{item.category}</td>
+                    <td>{item.condition}</td>
                     <td>
                       <span className={`badge ${STATUS_CLASS[item.status] ?? 'b-other'}`}>
                         {item.status}
