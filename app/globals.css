@@ -272,7 +272,7 @@ tr:hover td { background: var(--surface2); }
 .b-equipment{ background: #e0f2fe; color: #075985; }
 .b-other    { background: #f1f0ec; color: #57534e; }
 .b-available  { background: #e6f4ea; color: #276b3a; }
-.b-inuse      { background: #fef3e2; color: #905a00; }
+.b-inuse      { background: #e8e8e8; color: #555555; }
 .b-maintenance{ background: #fce8e8; color: #b91c1c; }
 
 [data-theme="dark"] .b-good      { background: #14381f; color: #6ee7a0; }
@@ -283,7 +283,7 @@ tr:hover td { background: var(--surface2); }
 [data-theme="dark"] .b-equipment { background: #0c2d45; color: #7dd3fc; }
 [data-theme="dark"] .b-other     { background: #28261f; color: #a8a29e; }
 [data-theme="dark"] .b-available   { background: #14381f; color: #6ee7a0; }
-[data-theme="dark"] .b-inuse       { background: #3a2500; color: #fbbf24; }
+[data-theme="dark"] .b-inuse       { background: #3a3a3a; color: #b0b0b0; }
 [data-theme="dark"] .b-maintenance { background: #3a1010; color: #f87171; }
 
 /* ── Checkbox ── */
