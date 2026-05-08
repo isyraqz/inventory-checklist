@@ -390,7 +390,7 @@ export default function Dashboard() {
                       </span>
                     </td>
                     <td>{item.location || '—'}</td>
-                    <td className="mono">{item.date_acquired || '—'}</td>
+                    <td className="mono">{item.date_acquired ? item.date_acquired.split('-').reverse().join('-') : '—'}</td>
                     {role === 'admin' && (
                       <td className="no-strike">
                         <div className="actions">
