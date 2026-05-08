@@ -311,12 +311,17 @@ export default function Dashboard() {
             </svg>
             Export CSV
           </button>
-          {role === 'admin' && checkedCount > 0 && (
-            <button className="btn" onClick={clearAudit}>
-              Clear audit
-            </button>
-          )}
         </div>
+
+        {/* Clear audit bar */}
+        {role === 'admin' && checkedCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+            <span style={{ color: 'var(--text-muted)' }}>
+              <strong style={{ color: 'var(--text)' }}>{checkedCount}</strong> item{checkedCount !== 1 ? 's' : ''} checked in for audit
+            </span>
+            <button className="btn" onClick={clearAudit}>Clear audit</button>
+          </div>
+        )}
 
         {/* Table */}
         <div className="table-card">
