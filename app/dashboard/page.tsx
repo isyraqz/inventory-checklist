@@ -313,23 +313,21 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Audit bar */}
+        {role === 'admin' && checkedCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px', marginBottom: '0.75rem', fontSize: 13 }}>
+            <span style={{ color: 'var(--text-muted)' }}><strong style={{ color: 'var(--text)' }}>{checkedCount}</strong> item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
+            <button className="btn" onClick={clearAudit}>Clear audit</button>
+          </div>
+        )}
+
         {/* Table */}
         <div className="table-card">
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th style={{ width: 36, cursor: 'default' }}>
-                    {role === 'admin' && checkedCount > 0 && (
-                      <button
-                        onClick={clearAudit}
-                        title="Clear all audit checks"
-                        style={{ fontSize: 9, fontFamily: 'var(--font)', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-hint)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1.3, textAlign: 'left' }}
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </th>
+                  <th style={{ width: 36, cursor: 'default' }} />
                   {COL_LABELS.map(({ key, label }) => (
                     <th
                       key={key}
