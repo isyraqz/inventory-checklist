@@ -61,6 +61,8 @@ export default function Dashboard() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [userEmail, setUserEmail] = useState('')
   const [role, setRole] = useState<'admin' | 'viewer'>('viewer')
+  const [auditChecked, setAuditChecked] = useState<Set<string>>(new Set())
+  const [userId, setUserId] = useState<string | null>(null)
   const toastId = useRef(0)
 
   const loadItems = useCallback(async () => {
@@ -70,17 +72,26 @@ export default function Dashboard() {
     setLoading(false)
   }, [supabase])
 
+  const loadAuditChecks = useCallback(async (uid: string) => {
+    const { data } = await supabase.from('audit_checks').select('item_id').eq('user_id', uid)
+    setAuditChecked(new Set((data || []).map((r: { item_id: string }) => r.item_id)))
+  }, [supabase])
+
   useEffect(() => {
     loadItems()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user?.email) setUserEmail(user.email)
       if (user) {
+        setUserId(user.id)
         const { data } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single()
-        if (data?.role === 'admin') setRole('admin')
+        if (data?.role === 'admin') {
+          setRole('admin')
+          loadAuditChecks(user.id)
+        }
       }
     })
     const saved = localStorage.getItem('inv_theme')
@@ -88,7 +99,7 @@ export default function Dashboard() {
       setTheme('dark')
       document.documentElement.setAttribute('data-theme', 'dark')
     }
-  }, [loadItems, supabase])
+  }, [loadItems, loadAuditChecks, supabase])
 
   function toast(msg: string) {
     const id = toastId.current++
@@ -156,15 +167,22 @@ export default function Dashboard() {
     setModalOpen(false)
   }
 
-  async function toggleItem(id: string, checked: boolean) {
-    await supabase.from('items').update({ checked: !checked }).eq('id', id)
-    setItems(prev => prev.map(i => i.id === id ? { ...i, checked: !checked } : i))
+  async function toggleItem(id: string) {
+    if (!userId) return
+    if (auditChecked.has(id)) {
+      await supabase.from('audit_checks').delete().eq('user_id', userId).eq('item_id', id)
+      setAuditChecked(prev => { const s = new Set(prev); s.delete(id); return s })
+    } else {
+      await supabase.from('audit_checks').insert({ user_id: userId, item_id: id })
+      setAuditChecked(prev => new Set(prev).add(id))
+    }
   }
 
   async function clearAudit() {
-    if (!confirm('Clear all audit checks? This will uncheck all items.')) return
-    await supabase.from('items').update({ checked: false }).neq('id', '')
-    setItems(prev => prev.map(i => ({ ...i, checked: false })))
+    if (!confirm('Clear all audit checks? This will uncheck all your items.')) return
+    if (!userId) return
+    await supabase.from('audit_checks').delete().eq('user_id', userId)
+    setAuditChecked(new Set())
     toast('Audit cleared')
   }
 
@@ -209,7 +227,7 @@ export default function Dashboard() {
     })
 
   const total = items.length
-  const checkedCount = items.filter(i => i.checked).length
+  const checkedCount = auditChecked.size
   const inuse = items.filter(i => i.status === 'In use').length
   const avail = items.filter(i => i.status === 'Available').length
   const maint = items.filter(i => i.status === 'Maintenance').length
@@ -367,13 +385,13 @@ export default function Dashboard() {
                     </td>
                   </tr>
                 ) : filtered.map(item => (
-                  <tr key={item.id} className={item.checked ? 'row-checked' : ''}>
+                  <tr key={item.id} className={role === 'admin' && auditChecked.has(item.id) ? 'row-checked' : ''}>
                     {role === 'admin' && (
                       <td className="no-strike">
                         <input
                           type="checkbox"
-                          checked={item.checked}
-                          onChange={() => toggleItem(item.id, item.checked)}
+                          checked={auditChecked.has(item.id)}
+                          onChange={() => toggleItem(item.id)}
                         />
                       </td>
                     )}
