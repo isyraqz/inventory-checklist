@@ -238,10 +238,18 @@ export default function Dashboard() {
       {/* Header */}
       <header className="app-header" style={role === 'admin' ? { background: '#1e3a5f', borderBottomColor: 'rgba(255,255,255,0.1)' } : {}}>
         <div className="logo" style={role === 'admin' ? { color: '#ffffff' } : {}}>
-          <div className="logo-mark" style={role === 'admin' ? { background: 'rgba(255,255,255,0.15)' } : {}}>
-            <svg viewBox="0 0 16 16"><path d="M2 3h12v1.5H2zm0 4h12v1.5H2zm0 4h8v1.5H2z" /></svg>
-          </div>
-          Inventory Checklist
+          <span style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: '0.08em',
+            padding: '3px 7px',
+            borderRadius: 6,
+            border: `1px solid ${role === 'admin' ? 'rgba(255,255,255,0.25)' : 'var(--border-strong)'}`,
+            color: role === 'admin' ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
+            userSelect: 'none',
+          }}>VV</span>
+          Verus Virtus — Inventory Checklist
         </div>
         <div className="header-right">
           {userEmail && (

@@ -30,10 +30,8 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="logo-mark">
-            <svg viewBox="0 0 16 16"><path d="M2 3h12v1.5H2zm0 4h12v1.5H2zm0 4h8v1.5H2z" /></svg>
-          </div>
-          Inventory Checklist
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', padding: '3px 7px', borderRadius: 6, border: '1px solid var(--border-strong)', color: 'var(--text-muted)', userSelect: 'none' }}>VV</span>
+          Verus Virtus — Inventory Checklist
         </div>
         <div className="auth-title">Sign in</div>
         <div className="auth-subtitle">Enter your credentials to continue.</div>
