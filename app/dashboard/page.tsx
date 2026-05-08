@@ -187,8 +187,8 @@ export default function Dashboard() {
       (!filterStatus || i.status === filterStatus)
     )
     .sort((a, b) => {
-      const av = (String((a as Record<string, unknown>)[sortKey] ?? '')).toLowerCase()
-      const bv = (String((b as Record<string, unknown>)[sortKey] ?? '')).toLowerCase()
+      const av = String(a[sortKey as keyof Item] ?? '').toLowerCase()
+      const bv = String(b[sortKey as keyof Item] ?? '').toLowerCase()
       return av < bv ? -sortDir : av > bv ? sortDir : 0
     })
 
