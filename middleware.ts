@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (!user && pathname !== '/login') {
+  if (!user && pathname !== '/login' && pathname !== '/invite') {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
