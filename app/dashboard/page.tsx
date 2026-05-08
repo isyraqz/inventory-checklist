@@ -252,11 +252,13 @@ export default function Dashboard() {
             <div className="stat-label">Total items</div>
             <div className="stat-value">{total}</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-label">Checked in <span style={{ fontWeight: 400, opacity: 0.6 }}>(for audit)</span></div>
-            <div className="stat-value">{checkedCount}</div>
-            <div className="stat-sub">{pct}% verified</div>
-          </div>
+          {role === 'admin' && (
+            <div className="stat-card">
+              <div className="stat-label">Checked in <span style={{ fontWeight: 400, opacity: 0.6 }}>(for audit)</span></div>
+              <div className="stat-value">{checkedCount}</div>
+              <div className="stat-sub">{pct}% verified</div>
+            </div>
+          )}
           <div className="stat-card">
             <div className="stat-label">In use</div>
             <div className="stat-value">{inuse}</div>
@@ -333,7 +335,7 @@ export default function Dashboard() {
             <table>
               <thead>
                 <tr>
-                  <th style={{ width: 36, cursor: 'default' }} />
+                  {role === 'admin' && <th style={{ width: 36, cursor: 'default' }} />}
                   {COL_LABELS.map(({ key, label }) => (
                     <th
                       key={key}
@@ -364,13 +366,15 @@ export default function Dashboard() {
                   </tr>
                 ) : filtered.map(item => (
                   <tr key={item.id} className={item.checked ? 'row-checked' : ''}>
-                    <td className="no-strike">
-                      <input
-                        type="checkbox"
-                        checked={item.checked}
-                        onChange={() => toggleItem(item.id, item.checked)}
-                      />
-                    </td>
+                    {role === 'admin' && (
+                      <td className="no-strike">
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={() => toggleItem(item.id, item.checked)}
+                        />
+                      </td>
+                    )}
                     <td className="item-name">{item.name}</td>
                     <td className="mono">{item.serial || '—'}</td>
                     <td>
