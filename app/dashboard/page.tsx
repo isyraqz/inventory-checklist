@@ -242,7 +242,7 @@ export default function Dashboard() {
             <div className="stat-value">{total}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-label">Checked in <span style={{ fontWeight: 400, opacity: 0.6 }}>(audit)</span></div>
+            <div className="stat-label">Checked in <span style={{ fontWeight: 400, opacity: 0.6 }}>(for audit)</span></div>
             <div className="stat-value">{checkedCount}</div>
             <div className="stat-sub">{pct}% verified</div>
           </div>
