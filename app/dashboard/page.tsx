@@ -324,7 +324,7 @@ export default function Dashboard() {
                       <button
                         onClick={clearAudit}
                         title="Clear all audit checks"
-                        style={{ fontSize: 9, fontFamily: 'var(--font)', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-hint)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1.3, textAlign: 'left' }}
+                        style={{ fontSize: 9, fontFamily: 'var(--font)', fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: '#b91c1c', background: '#fce8e8', border: 'none', borderRadius: 4, cursor: 'pointer', padding: '2px 5px', lineHeight: 1.5, textAlign: 'left', whiteSpace: 'nowrap' }}
                       >
                         Clear
                       </button>
