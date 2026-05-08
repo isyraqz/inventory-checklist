@@ -274,15 +274,17 @@ export default function Dashboard() {
         </div>
 
         {/* Progress */}
-        <div className="progress-row">
-          <div className="progress-meta">
-            <span>Check-in progress</span>
-            <strong>{pct}%</strong>
+        {role === 'admin' && (
+          <div className="progress-row">
+            <div className="progress-meta">
+              <span>Check-in progress</span>
+              <strong>{pct}%</strong>
+            </div>
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: `${pct}%` }} />
+            </div>
           </div>
-          <div className="progress-track">
-            <div className="progress-fill" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
+        )}
 
         {/* Toolbar */}
         <div className="toolbar">
