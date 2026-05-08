@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function Login() {
@@ -70,9 +69,6 @@ export default function Login() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-        <div className="auth-link">
-          Don&apos;t have an account? <Link href="/signup">Sign up</Link>
-        </div>
       </div>
     </div>
   )
