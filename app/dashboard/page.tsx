@@ -226,7 +226,11 @@ export default function Dashboard() {
           Inventory Checklist
         </div>
         <div className="header-right">
-          {userEmail && <span className="user-email">{userEmail}</span>}
+          {userEmail && (
+            <span className="user-email">
+              {userEmail}{role === 'admin' && <span style={{ color: 'var(--text-hint)', fontStyle: 'italic' }}> (admin)</span>}
+            </span>
+          )}
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
