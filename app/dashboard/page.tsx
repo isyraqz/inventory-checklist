@@ -257,15 +257,6 @@ export default function Dashboard() {
             style={role === 'admin' ? { background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' } : {}}>
             Sign out
           </button>
-          {role === 'admin' && (
-            <button className="btn btn-primary" onClick={openModal}
-              style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.25)', color: '#fff' }}>
-              <svg viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
-              </svg>
-              Add item
-            </button>
-          )}
 
         </div>
       </header>
@@ -312,7 +303,7 @@ export default function Dashboard() {
         )}
 
         {/* Toolbar */}
-        <div className="toolbar">
+        <div className="toolbar" style={{ justifyContent: 'space-between' }}>
           <div className="search-wrap">
             <svg viewBox="0 0 16 16" fill="currentColor">
               <path d="M6.5 1a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Zm4.472 9.33 3.35 3.35a.75.75 0 0 1-1.06 1.06L9.91 11.69a6.5 6.5 0 1 1 1.062-1.06Z" />
@@ -338,6 +329,14 @@ export default function Dashboard() {
             <option>In use</option>
             <option>Maintenance</option>
           </select>
+          {role === 'admin' && (
+            <button className="btn btn-primary" onClick={openModal}>
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
+              </svg>
+              Add item
+            </button>
+          )}
           <button className="btn" onClick={exportCSV}>
             <svg viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 1.25a.75.75 0 0 1 .75.75v6.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L7.25 8.19V2A.75.75 0 0 1 8 1.25ZM2 13.25a.75.75 0 0 0 0 1.5h12a.75.75 0 0 0 0-1.5H2Z" />
