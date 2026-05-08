@@ -238,17 +238,11 @@ export default function Dashboard() {
       {/* Header */}
       <header className="app-header" style={role === 'admin' ? { background: '#1e3a5f', borderBottomColor: 'rgba(255,255,255,0.1)' } : {}}>
         <div className="logo" style={role === 'admin' ? { color: '#ffffff' } : {}}>
-          <span style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            fontWeight: 500,
-            letterSpacing: '0.08em',
-            padding: '3px 7px',
-            borderRadius: 6,
-            border: `1px solid ${role === 'admin' ? 'rgba(255,255,255,0.25)' : 'var(--border-strong)'}`,
-            color: role === 'admin' ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
-            userSelect: 'none',
-          }}>VV</span>
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+            <path d="M4 1.5A1.5 1.5 0 0 1 5.5 0h4.086a1.5 1.5 0 0 1 1.06.44l2.915 2.914A1.5 1.5 0 0 1 14 4.414V13.5A1.5 1.5 0 0 1 12.5 15h-7A1.5 1.5 0 0 1 4 13.5v-12Z" fill={role === 'admin' ? 'rgba(255,255,255,0.2)' : 'var(--surface2)'} stroke={role === 'admin' ? 'rgba(255,255,255,0.4)' : 'var(--border-strong)'} strokeWidth="1"/>
+            <path d="M9.5 0v3.5A1.5 1.5 0 0 0 11 5h3" stroke={role === 'admin' ? 'rgba(255,255,255,0.4)' : 'var(--border-strong)'} strokeWidth="1" fill="none"/>
+            <path d="M6 8h4M6 10.5h3" stroke={role === 'admin' ? 'rgba(255,255,255,0.6)' : 'var(--text-hint)'} strokeWidth="1" strokeLinecap="round"/>
+          </svg>
           Verus Virtus — Inventory Checklist
         </div>
         <div className="header-right">
