@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inventory Checklist</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.2);
+    --text: #1a1917;
+    --text-muted: #6b6860;
+    --text-hint: #a09d98;
+    --accent: #1a1917;
+    --accent-fg: #f5f4f0;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-modal: 0 8px 40px rgba(0,0,0,0.18);
+    --font: 'Sora', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  [data-theme="dark"] {
+    --bg: #151412;
+    --surface: #1e1c1a;
+    --surface2: #272421;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.15);
+    --text: #f0ede8;
+    --text-muted: #9a9690;
+    --text-hint: #5a5754;
+    --accent: #f0ede8;
+    --accent-fg: #1a1917;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-modal: 0 8px 40px rgba(0,0,0,0.5);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 14px; height: 14px; fill: var(--accent-fg); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .theme-toggle {
+    width: 34px; height: 34px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: background 0.15s;
+  }
+  .theme-toggle:hover { background: var(--surface2); }
+
+  /* ── Layout ── */
+  .app-body { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+
+  /* ── Stats ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 6px;
+  }
+  .stat-value { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Progress ── */
+  .progress-row { margin-bottom: 1.5rem; }
+  .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .progress-meta span { font-size: 12px; color: var(--text-muted); }
+  .progress-meta strong { font-size: 12px; font-weight: 600; }
+  .progress-track {
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px;
+    color: var(--text-hint);
+    pointer-events: none;
+  }
+  input[type="text"], select {
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26,25,23,0.08);
+  }
+  [data-theme="dark"] input[type="text"]:focus,
+  [data-theme="dark"] select:focus {
+    box-shadow: 0 0 0 3px rgba(240,237,232,0.1);
+  }
+  .search-input { padding-left: 34px; width: 100%; height: 38px; }
+  select { height: 38px; cursor: pointer; }
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    height: 38px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); }
+  .btn svg { width: 13px; height: 13px; }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--surface2); }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+  }
+  th:hover { color: var(--text-muted); }
+  th.sort-asc::after { content: " ↑"; }
+  th.sort-desc::after { content: " ↓"; }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.row-checked td { opacity: 0.45; }
+  tr.row-checked td.no-strike { opacity: 1; text-decoration: none; }
+  tr { transition: background 0.1s; }
+  tr:hover td { background: var(--surface2); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: 3px 9px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .b-good    { background: #e6f4ea; color: #276b3a; }
+  .b-fair    { background: #fef3e2; color: #905a00; }
+  .b-poor    { background: #fce8e8; color: #b91c1c; }
+  .b-it      { background: #e8f0fe; color: #1a56db; }
+  .b-furniture { background: #fce7f3; color: #9d174d; }
+  .b-equipment { background: #e0f2fe; color: #075985; }
+  .b-other   { background: #f1f0ec; color: #57534e; }
+  .b-available  { background: #e6f4ea; color: #276b3a; }
+  .b-inuse      { background: #fef3e2; color: #905a00; }
+  .b-maintenance{ background: #fce8e8; color: #b91c1c; }
+
+  [data-theme="dark"] .b-good     { background: #14381f; color: #6ee7a0; }
+  [data-theme="dark"] .b-fair     { background: #3a2500; color: #fbbf24; }
+  [data-theme="dark"] .b-poor     { background: #3a1010; color: #f87171; }
+  [data-theme="dark"] .b-it       { background: #1e2f5e; color: #93b4fd; }
+  [data-theme="dark"] .b-furniture{ background: #3b1030; color: #f0abcb; }
+  [data-theme="dark"] .b-equipment{ background: #0c2d45; color: #7dd3fc; }
+  [data-theme="dark"] .b-other    { background: #28261f; color: #a8a29e; }
+  [data-theme="dark"] .b-available  { background: #14381f; color: #6ee7a0; }
+  [data-theme="dark"] .b-inuse      { background: #3a2500; color: #fbbf24; }
+  [data-theme="dark"] .b-maintenance{ background: #3a1010; color: #f87171; }
+
+  /* ── Checkbox ── */
+  input[type="checkbox"] {
+    width: 16px; height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    border-radius: 4px;
+  }
+  .mono { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+  .item-name { font-weight: 500; }
+  .actions { display: flex; gap: 4px; }
+  .icon-btn {
+    width: 28px; height: 28px;
+    border: none;
+    background: none;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, color 0.12s;
+    font-size: 13px;
+  }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  .icon-btn.del:hover { background: #fce8e8; color: #b91c1c; }
+  [data-theme="dark"] .icon-btn.del:hover { background: #3a1010; color: #f87171; }
+
+  /* ── Empty ── */
+  .empty-state {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--text-hint);
+  }
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.15s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-modal);
+    padding: 1.75rem;
+    width: 520px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.18s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .modal-header h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-field { display: flex; flex-direction: column; gap: 5px; }
+  .form-field.full { grid-column: span 2; }
+  .form-field label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-hint); }
+  .form-field input, .form-field select, .form-field textarea {
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26,25,23,0.08);
+  }
+  [data-theme="dark"] .form-field input:focus,
+  [data-theme="dark"] .form-field select:focus,
+  [data-theme="dark"] .form-field textarea:focus {
+    box-shadow: 0 0 0 3px rgba(240,237,232,0.08);
+  }
+  .form-field textarea { resize: vertical; min-height: 72px; }
+  .form-field input.error { border-color: #ef4444; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+
+  /* ── Toast ── */
+  .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 11px 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-modal);
+    animation: toastIn 0.2s ease;
+    max-width: 280px;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ── Footer ── */
+  .app-footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 11px;
+    color: var(--text-hint);
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 640px) {
+    .app-body { padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-field.full { grid-column: span 1; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16"><path d="M2 3h12v1.5H2zm0 4h12v1.5H2zm0 4h8v1.5H2z"/></svg>
+    </div>
+    Inventory Checklist
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z"/></svg>
+      Add item
+    </button>
+  </div>
+</header>
+
+<main class="app-body">
+  <div class="stats-row" id="stats"></div>
+  <div class="progress-row">
+    <div class="progress-meta">
+      <span>Check-in progress</span>
+      <strong id="progress-label">0%</strong>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 16 16" fill="currentColor" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-hint)"><path d="M6.5 1a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Zm4.472 9.33 3.35 3.35a.75.75 0 0 1-1.06 1.06L9.91 11.69a6.5 6.5 0 1 1 1.062-1.06Z"/></svg>
+      <input type="text" class="search-input" id="search" placeholder="Search items, serial, user, location…" oninput="render()" />
+    </div>
+    <select id="filterCat" onchange="render()">
+      <option value="">All categories</option>
+      <option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option>
+    </select>
+    <select id="filterStatus" onchange="render()">
+      <option value="">All statuses</option>
+      <option>Available</option><option>In use</option><option>Maintenance</option>
+    </select>
+    <button class="btn" onclick="exportCSV()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.25a.75.75 0 0 1 .75.75v6.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L7.25 8.19V2A.75.75 0 0 1 8 1.25ZM2 13.25a.75.75 0 0 0 0 1.5h12a.75.75 0 0 0 0-1.5H2Z"/></svg>
+      Export CSV
+    </button>
+  </div>
+
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px;cursor:default"></th>
+            <th onclick="sortBy('name')">Item name</th>
+            <th onclick="sortBy('serial')">Serial no.</th>
+            <th onclick="sortBy('user')">Assigned to</th>
+            <th onclick="sortBy('cat')">Category</th>
+            <th onclick="sortBy('cond')">Condition</th>
+            <th onclick="sortBy('status')">Status</th>
+            <th onclick="sortBy('loc')">Location</th>
+            <th onclick="sortBy('date')">Date in</th>
+            <th style="cursor:default;width:80px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer class="app-footer">Inventory Checklist &mdash; all data stored locally in your browser</footer>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add inventory item</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-field full">
+        <label>Item name *</label>
+        <input type="text" id="fName" placeholder="e.g. Dell Latitude 5520" />
+      </div>
+      <div class="form-field">
+        <label>Serial number</label>
+        <input type="text" id="fSerial" placeholder="e.g. SN-DL5520-001" />
+      </div>
+      <div class="form-field">
+        <label>Assigned to</label>
+        <input type="text" id="fUser" placeholder="e.g. John Doe" />
+      </div>
+      <div class="form-field">
+        <label>Category</label>
+        <select id="fCat">
+          <option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Condition</label>
+        <select id="fCond"><option>Good</option><option>Fair</option><option>Poor</option></select>
+      </div>
+      <div class="form-field">
+        <label>Status</label>
+        <select id="fStatus"><option>Available</option><option>In use</option><option>Maintenance</option></select>
+      </div>
+      <div class="form-field">
+        <label>Location</label>
+        <input type="text" id="fLoc" placeholder="e.g. Office A" />
+      </div>
+      <div class="form-field">
+        <label>Date acquired</label>
+        <input type="date" id="fDate" />
+      </div>
+      <div class="form-field full">
+        <label>Notes</label>
+        <textarea id="fNotes" placeholder="Any additional details…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Save item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── Data ──
+const STORAGE_KEY = 'inv_items_v1';
+let items = [];
+let editId = null;
+let nextId = 100;
+let sortKey = 'name';
+let sortDir = 1;
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { const d = JSON.parse(raw); items = d.items; nextId = d.nextId || 100; }
+  } catch(e) {}
+  if (!items.length) {
+    items = [
+      {id:1,name:'Dell Latitude 5520',serial:'SN-DL5520-001',user:'Alice Tan',cat:'IT',cond:'Good',status:'In use',loc:'Office A',date:'2024-01-10',notes:'Primary work laptop',checked:false},
+      {id:2,name:'HP LaserJet Pro',serial:'SN-HPLJ-042',user:'IT Dept',cat:'IT',cond:'Good',status:'Available',loc:'Print Room',date:'2023-06-15',notes:'Shared printer',checked:false},
+      {id:3,name:'Ergonomic Chair',serial:'SN-CHAIR-007',user:'Bob Lee',cat:'Furniture',cond:'Fair',status:'In use',loc:'Workstation 3',date:'2022-03-20',notes:'',checked:false},
+      {id:4,name:'Standing Desk',serial:'SN-DESK-012',user:'',cat:'Furniture',cond:'Good',status:'Available',loc:'Storage',date:'2023-11-01',notes:'',checked:false},
+      {id:5,name:'Projector Epson X49',serial:'SN-EP-X49-005',user:'',cat:'Equipment',cond:'Poor',status:'Maintenance',loc:'Meeting Rm 2',date:'2021-07-08',notes:'Lamp needs replacement',checked:false},
+    ];
+    nextId = 6;
+  }
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, nextId }));
+}
+
+// ── Badges ──
+function badgeCat(v) {
+  const m = {IT:'b-it',Furniture:'b-furniture',Equipment:'b-equipment',Other:'b-other'};
+  return `<span class="badge ${m[v]||'b-other'}">${v}</span>`;
+}
+function badgeCond(v) {
+  const m = {Good:'b-good',Fair:'b-fair',Poor:'b-poor'};
+  return `<span class="badge ${m[v]||'b-other'}">${v}</span>`;
+}
+function badgeStatus(v) {
+  const m = {'Available':'b-available','In use':'b-inuse','Maintenance':'b-maintenance'};
+  return `<span class="badge ${m[v]||'b-other'}">${v}</span>`;
+}
+
+// ── Render ──
+function render() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const fc = document.getElementById('filterCat').value;
+  const fs = document.getElementById('filterStatus').value;
+
+  let filtered = items.filter(i =>
+    (!q || [i.name,i.serial,i.user,i.loc,i.notes].some(f=>(f||'').toLowerCase().includes(q))) &&
+    (!fc || i.cat === fc) &&
+    (!fs || i.status === fs)
+  );
+
+  filtered.sort((a,b)=>{
+    const av = (a[sortKey]||'').toString().toLowerCase();
+    const bv = (b[sortKey]||'').toString().toLowerCase();
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  const tbody = document.getElementById('tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📦</div><p>No items found. Try adjusting your search or filters.</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map(i => `
+      <tr class="${i.checked?'row-checked':''}">
+        <td class="no-strike"><input type="checkbox" ${i.checked?'checked':''} onchange="toggle(${i.id})" /></td>
+        <td class="item-name">${esc(i.name)}</td>
+        <td class="mono">${esc(i.serial)||'—'}</td>
+        <td>${esc(i.user)||'<span style="color:var(--text-hint)">Unassigned</span>'}</td>
+        <td>${badgeCat(i.cat)}</td>
+        <td>${badgeCond(i.cond)}</td>
+        <td>${badgeStatus(i.status)}</td>
+        <td>${esc(i.loc)||'—'}</td>
+        <td class="mono">${i.date||'—'}</td>
+        <td class="no-strike">
+          <div class="actions">
+            <button class="icon-btn" title="Edit" onclick="editItem(${i.id})">✎</button>
+            <button class="icon-btn del" title="Delete" onclick="deleteItem(${i.id})">✕</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  updateStats();
+  updateSortHeaders();
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateStats() {
+  const total = items.length;
+  const checked = items.filter(i=>i.checked).length;
+  const inuse = items.filter(i=>i.status==='In use').length;
+  const maint = items.filter(i=>i.status==='Maintenance').length;
+  const avail = items.filter(i=>i.status==='Available').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total items</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Checked in</div><div class="stat-value">${checked}</div><div class="stat-sub">${total?Math.round(checked/total*100):0}% verified</div></div>
+    <div class="stat-card"><div class="stat-label">In use</div><div class="stat-value">${inuse}</div></div>
+    <div class="stat-card"><div class="stat-label">Available</div><div class="stat-value">${avail}</div></div>
+    <div class="stat-card"><div class="stat-label">Maintenance</div><div class="stat-value">${maint}</div></div>
+  `;
+  const pct = total ? Math.round(checked/total*100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '%';
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  const ths = document.querySelectorAll('th');
+  const keys = [null,'name','serial','user','cat','cond','status','loc','date',null];
+  keys.forEach((k,i) => {
+    if (k === sortKey) ths[i].classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+// ── Actions ──
+function toggle(id) {
+  const item = items.find(i=>i.id===id);
+  if (item) { item.checked = !item.checked; saveData(); render(); }
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = 1; }
+  render();
+}
+
+function deleteItem(id) {
+  const item = items.find(i=>i.id===id);
+  if (!item) return;
+  if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+  items = items.filter(i=>i.id!==id);
+  saveData(); render();
+  toast('Item deleted');
+}
+
+// ── Modal ──
+function openModal() {
+  editId = null;
+  document.getElementById('modalTitle').textContent = 'Add inventory item';
+  ['fName','fSerial','fUser','fLoc','fNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fDate').value = '';
+  document.getElementById('fCat').value = 'IT';
+  document.getElementById('fCond').value = 'Good';
+  document.getElementById('fStatus').value = 'Available';
+  document.getElementById('fName').classList.remove('error');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(), 100);
+}
+
+function editItem(id) {
+  const item = items.find(i=>i.id===id);
+  if (!item) return;
+  editId = id;
+  document.getElementById('modalTitle').textContent = 'Edit item';
+  document.getElementById('fName').value = item.name;
+  document.getElementById('fSerial').value = item.serial;
+  document.getElementById('fUser').value = item.user;
+  document.getElementById('fCat').value = item.cat;
+  document.getElementById('fCond').value = item.cond;
+  document.getElementById('fStatus').value = item.status;
+  document.getElementById('fLoc').value = item.loc;
+  document.getElementById('fDate').value = item.date;
+  document.getElementById('fNotes').value = item.notes;
+  document.getElementById('fName').classList.remove('error');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function overlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+function saveItem() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) {
+    document.getElementById('fName').classList.add('error');
+    document.getElementById('fName').focus();
+    return;
+  }
+  document.getElementById('fName').classList.remove('error');
+  const data = {
+    name,
+    serial: document.getElementById('fSerial').value.trim(),
+    user:   document.getElementById('fUser').value.trim(),
+    cat:    document.getElementById('fCat').value,
+    cond:   document.getElementById('fCond').value,
+    status: document.getElementById('fStatus').value,
+    loc:    document.getElementById('fLoc').value.trim(),
+    date:   document.getElementById('fDate').value,
+    notes:  document.getElementById('fNotes').value.trim(),
+  };
+  if (editId) {
+    Object.assign(items.find(i=>i.id===editId), data);
+    toast('Item updated');
+  } else {
+    items.push({ id: nextId++, checked: false, ...data });
+    toast('Item added');
+  }
+  saveData(); closeModal(); render();
+}
+
+// ── Export ──
+function exportCSV() {
+  const headers = ['Item','Serial No','Assigned To','Category','Condition','Status','Location','Date Acquired','Notes','Checked In'];
+  const rows = items.map(i =>
+    [i.name,i.serial,i.user,i.cat,i.cond,i.status,i.loc,i.date,i.notes,i.checked?'Yes':'No']
+      .map(v => `"${(v||'').replace(/"/g,'""')}"`)
+      .join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `inventory_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('CSV exported');
+}
+
+// ── Toast ──
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(), 300); }, 2500);
+}
+
+// ── Theme ──
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+  document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('inv_theme', isDark ? 'light' : 'dark');
+});
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') {
+    if (document.getElementById('modalOverlay').classList.contains('open')) saveItem();
+  }
+});
+
+// ── Init ──
+loadData();
+const savedTheme = localStorage.getItem('inv_theme');
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme','dark');
+  document.getElementById('themeToggle').textContent = '☀️';
+}
+render();
+</script>
+</body>
+</html>
