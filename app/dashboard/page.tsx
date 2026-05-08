@@ -315,9 +315,11 @@ export default function Dashboard() {
 
         {/* Audit bar */}
         {role === 'admin' && checkedCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px', marginBottom: '0.75rem', fontSize: 13 }}>
-            <span style={{ color: 'var(--text-muted)' }}><strong style={{ color: 'var(--text)' }}>{checkedCount}</strong> item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
-            <button className="btn" onClick={clearAudit}>Clear audit</button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--accent)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '0.75rem', fontSize: 13 }}>
+            <span style={{ color: 'var(--accent-fg)', fontWeight: 500 }}>✓ {checkedCount} item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
+            <button onClick={clearAudit} style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.15)', color: 'var(--accent-fg)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Clear audit
+            </button>
           </div>
         )}
 
