@@ -236,29 +236,36 @@ export default function Dashboard() {
   return (
     <>
       {/* Header */}
-      <header className="app-header">
-        <div className="logo">
-          <div className="logo-mark">
+      <header className="app-header" style={role === 'admin' ? { background: '#1e3a5f', borderBottomColor: 'rgba(255,255,255,0.1)' } : {}}>
+        <div className="logo" style={role === 'admin' ? { color: '#ffffff' } : {}}>
+          <div className="logo-mark" style={role === 'admin' ? { background: 'rgba(255,255,255,0.15)' } : {}}>
             <svg viewBox="0 0 16 16"><path d="M2 3h12v1.5H2zm0 4h12v1.5H2zm0 4h8v1.5H2z" /></svg>
           </div>
           Inventory Checklist
         </div>
         <div className="header-right">
           {userEmail && (
-            <span className="user-email">
-              {userEmail}{role === 'admin' && <span style={{ color: 'var(--text-hint)', fontStyle: 'italic' }}> (admin)</span>}
+            <span className="user-email" style={role === 'admin' ? { color: 'rgba(255,255,255,0.6)' } : {}}>
+              {userEmail}{role === 'admin' && <span style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}> (admin)</span>}
             </span>
           )}
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode">
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode"
+            style={role === 'admin' ? { background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' } : {}}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <button className="btn" onClick={signOut}>Sign out</button>
-          {role === 'admin' && <button className="btn btn-primary" onClick={openModal}>
-            <svg viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
-            </svg>
-            Add item
-          </button>}
+          <button className="btn" onClick={signOut}
+            style={role === 'admin' ? { background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' } : {}}>
+            Sign out
+          </button>
+          {role === 'admin' && (
+            <button className="btn btn-primary" onClick={openModal}
+              style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.25)', color: '#fff' }}>
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
+              </svg>
+              Add item
+            </button>
+          )}
 
         </div>
       </header>
