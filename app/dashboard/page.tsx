@@ -161,6 +161,13 @@ export default function Dashboard() {
     setItems(prev => prev.map(i => i.id === id ? { ...i, checked: !checked } : i))
   }
 
+  async function clearAudit() {
+    if (!confirm('Clear all audit checks? This will uncheck all items.')) return
+    await supabase.from('items').update({ checked: false }).neq('id', '')
+    setItems(prev => prev.map(i => ({ ...i, checked: false })))
+    toast('Audit cleared')
+  }
+
   async function deleteItem(item: Item) {
     if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return
     await supabase.from('items').delete().eq('id', item.id)
@@ -304,6 +311,11 @@ export default function Dashboard() {
             </svg>
             Export CSV
           </button>
+          {role === 'admin' && checkedCount > 0 && (
+            <button className="btn" onClick={clearAudit}>
+              Clear audit
+            </button>
+          )}
         </div>
 
         {/* Table */}
