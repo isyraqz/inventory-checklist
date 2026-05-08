@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([])
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [userEmail, setUserEmail] = useState('')
+  const [role, setRole] = useState<'admin' | 'viewer'>('viewer')
   const toastId = useRef(0)
 
   const loadItems = useCallback(async () => {
@@ -71,8 +72,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadItems()
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user?.email) setUserEmail(user.email)
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        if (data?.role === 'admin') setRole('admin')
+      }
     })
     const saved = localStorage.getItem('inv_theme')
     if (saved === 'dark') {
@@ -215,12 +224,13 @@ export default function Dashboard() {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
           <button className="btn" onClick={signOut}>Sign out</button>
-          <button className="btn btn-primary" onClick={openModal}>
+          {role === 'admin' && <button className="btn btn-primary" onClick={openModal}>
             <svg viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
             </svg>
             Add item
-          </button>
+          </button>}
+
         </div>
       </header>
 
@@ -312,7 +322,7 @@ export default function Dashboard() {
                       {label}
                     </th>
                   ))}
-                  <th style={{ cursor: 'default', width: 80 }}>Actions</th>
+                  {role === 'admin' && <th style={{ cursor: 'default', width: 80 }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -364,12 +374,14 @@ export default function Dashboard() {
                     </td>
                     <td>{item.location || '—'}</td>
                     <td className="mono">{item.date_acquired || '—'}</td>
-                    <td className="no-strike">
-                      <div className="actions">
-                        <button className="icon-btn" title="Edit" onClick={() => openEdit(item)}>✎</button>
-                        <button className="icon-btn del" title="Delete" onClick={() => deleteItem(item)}>✕</button>
-                      </div>
-                    </td>
+                    {role === 'admin' && (
+                      <td className="no-strike">
+                        <div className="actions">
+                          <button className="icon-btn" title="Edit" onClick={() => openEdit(item)}>✎</button>
+                          <button className="icon-btn del" title="Delete" onClick={() => deleteItem(item)}>✕</button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
