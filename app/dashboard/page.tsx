@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Item, ItemFormData, Category, Condition, ItemStatus, MaintenanceLog } from '@/lib/types'
+import type { Item, ItemFormData, Category, Condition, ItemStatus, MaintenanceLog, UserHistory } from '@/lib/types'
 import DatePicker from '@/components/DatePicker'
 import ChartPanel from '@/components/ChartPanel'
 
@@ -17,6 +17,7 @@ const EMPTY_FORM: ItemFormData = {
   category: 'IT',
   department: '',
   date_acquired: '',
+  purchased_date: '',
   warranty_exp: '',
   last_checked: '',
   remarks: '',
@@ -37,7 +38,7 @@ const COL_LABELS: { key: SortKey; label: string }[] = [
   { key: 'brand',        label: 'Brand' },
   { key: 'status',       label: 'Status' },
   { key: 'assigned_to',  label: 'Assigned To' },
-  { key: 'date_acquired',label: 'Issue Date' },
+  { key: 'date_acquired',label: 'Issued Date' },
   { key: 'remarks',      label: 'Remarks' },
 ]
 
@@ -86,6 +87,10 @@ export default function Dashboard() {
   const [logsLoading, setLogsLoading] = useState(false)
   const [logInput, setLogInput] = useState('')
   const [logSaving, setLogSaving] = useState(false)
+  const [userHistory, setUserHistory] = useState<UserHistory[]>([])
+  const [uhLoading, setUhLoading] = useState(false)
+  const [uhForm, setUhForm] = useState({ user_name: '', date_from: '', date_to: '' })
+  const [uhSaving, setUhSaving] = useState(false)
   const toastId = useRef(0)
 
   const loadItems = useCallback(async () => {
@@ -103,12 +108,17 @@ export default function Dashboard() {
   const loadLogs = useCallback(async (itemId: string) => {
     setLogsLoading(true)
     const { data } = await supabase
-      .from('maintenance_logs')
-      .select('*')
-      .eq('item_id', itemId)
-      .order('created_at', { ascending: false })
+      .from('maintenance_logs').select('*').eq('item_id', itemId).order('created_at', { ascending: false })
     setLogs((data as MaintenanceLog[]) || [])
     setLogsLoading(false)
+  }, [supabase])
+
+  const loadUserHistory = useCallback(async (itemId: string) => {
+    setUhLoading(true)
+    const { data } = await supabase
+      .from('item_user_history').select('*').eq('item_id', itemId).order('date_from', { ascending: false })
+    setUserHistory((data as UserHistory[]) || [])
+    setUhLoading(false)
   }, [supabase])
 
   useEffect(() => {
@@ -126,9 +136,16 @@ export default function Dashboard() {
   }, [loadItems, loadAuditChecks, supabase])
 
   useEffect(() => {
-    if (selectedItem) { setLogInput(''); loadLogs(selectedItem.id) }
-    else setLogs([])
-  }, [selectedItem, loadLogs])
+    if (selectedItem) {
+      setLogInput('')
+      setUhForm({ user_name: '', date_from: '', date_to: '' })
+      loadLogs(selectedItem.id)
+      loadUserHistory(selectedItem.id)
+    } else {
+      setLogs([])
+      setUserHistory([])
+    }
+  }, [selectedItem, loadLogs, loadUserHistory])
 
   function toast(msg: string) {
     const id = toastId.current++
@@ -161,6 +178,7 @@ export default function Dashboard() {
         category: item.category,
         department: item.department ?? '',
         date_acquired: toFormDate(item.date_acquired),
+        purchased_date: toFormDate(item.purchased_date),
         warranty_exp: toFormDate(item.warranty_exp),
         last_checked: toFormDate(item.last_checked),
         remarks: item.remarks ?? '',
@@ -191,6 +209,7 @@ export default function Dashboard() {
       category: form.category,
       department: form.department,
       date_acquired: toDBDate(form.date_acquired) || null,
+      purchased_date: toDBDate(form.purchased_date) || null,
       warranty_exp: toDBDate(form.warranty_exp) || null,
       last_checked: toDBDate(form.last_checked) || null,
       remarks: form.remarks,
@@ -232,6 +251,23 @@ export default function Dashboard() {
     toast('Audit cleared')
   }
 
+  async function addUserHistory() {
+    if (!uhForm.user_name.trim() || !selectedItem) return
+    setUhSaving(true)
+    const { error } = await supabase.from('item_user_history').insert({
+      item_id: selectedItem.id,
+      user_name: uhForm.user_name.trim(),
+      date_from: toDBDate(uhForm.date_from) || null,
+      date_to: toDBDate(uhForm.date_to) || null,
+    })
+    if (!error) {
+      setUhForm({ user_name: '', date_from: '', date_to: '' })
+      await loadUserHistory(selectedItem.id)
+      toast('User history added')
+    }
+    setUhSaving(false)
+  }
+
   async function addLog() {
     if (!logInput.trim() || !selectedItem || !userId) return
     setLogSaving(true)
@@ -259,7 +295,7 @@ export default function Dashboard() {
   }
 
   function exportCSV() {
-    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Issue Date', 'Warranty Exp', 'Last Checked', 'Remarks']
+    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Issued Date', 'Purchased Date', 'Warranty Exp', 'Last Checked', 'Remarks']
     const rows = items.map(i =>
       [
         String(i.item_no ?? '').padStart(3, '0'), i.name, i.brand ?? '', i.serial,
@@ -521,6 +557,10 @@ export default function Dashboard() {
                     <span className="detail-key">Assigned to</span>
                     <span className="detail-val">{selectedItem.assigned_to || '—'}</span>
                   </div>
+                  <div className="detail-row">
+                    <span className="detail-key">Issued date</span>
+                    <span className="detail-val mono">{fmtDate(selectedItem.date_acquired)}</span>
+                  </div>
                 </div>
 
                 <div className="panel-section">
@@ -542,8 +582,8 @@ export default function Dashboard() {
                 <div className="panel-section">
                   <div className="panel-section-title">Dates</div>
                   <div className="detail-row">
-                    <span className="detail-key">Issue date</span>
-                    <span className="detail-val mono">{fmtDate(selectedItem.date_acquired)}</span>
+                    <span className="detail-key">Purchased date</span>
+                    <span className="detail-val mono">{fmtDate(selectedItem.purchased_date)}</span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-key">Warranty exp.</span>
@@ -599,6 +639,60 @@ export default function Dashboard() {
                       <button onClick={addLog} disabled={logSaving || !logInput.trim()}
                         className="btn btn-primary" style={{ height: 34, padding: '0 12px', fontSize: 12 }}>
                         {logSaving ? '…' : 'Add'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* User History */}
+                <div className="panel-section">
+                  <div className="panel-section-title">User History</div>
+                  {uhLoading ? (
+                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
+                  ) : userHistory.length === 0 ? (
+                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {userHistory.map(h => (
+                        <div key={h.id} className="detail-row" style={{ alignItems: 'center' }}>
+                          <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>{h.user_name}</span>
+                          <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
+                            {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {role === 'admin' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+                      <input
+                        type="text"
+                        value={uhForm.user_name}
+                        onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
+                        placeholder="User name"
+                        style={{ fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
+                      />
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <input
+                          type="text"
+                          value={uhForm.date_from}
+                          onChange={e => setUhForm(f => ({ ...f, date_from: e.target.value }))}
+                          placeholder="From DD-MM-YYYY"
+                          maxLength={10}
+                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
+                        />
+                        <input
+                          type="text"
+                          value={uhForm.date_to}
+                          onChange={e => setUhForm(f => ({ ...f, date_to: e.target.value }))}
+                          placeholder="To (optional)"
+                          maxLength={10}
+                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
+                        />
+                      </div>
+                      <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()}
+                        className="btn btn-primary" style={{ height: 32, fontSize: 12, justifyContent: 'center' }}>
+                        {uhSaving ? 'Saving…' : 'Add entry'}
                       </button>
                     </div>
                   )}
@@ -678,8 +772,12 @@ export default function Dashboard() {
                   placeholder="e.g. IT, HR, Finance" />
               </div>
               <div className="form-field">
-                <label>Issue date</label>
+                <label>Issued date</label>
                 <DatePicker value={form.date_acquired} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} />
+              </div>
+              <div className="form-field">
+                <label>Purchased date</label>
+                <DatePicker value={form.purchased_date} onChange={v => setForm(f => ({ ...f, purchased_date: v }))} />
               </div>
               <div className="form-field">
                 <label>Warranty expiry</label>

@@ -24,6 +24,7 @@ export interface Item {
   category: Category
   department: string
   date_acquired: string | null
+  purchased_date: string | null
   warranty_exp: string | null
   last_checked: string | null
   remarks: string
@@ -44,8 +45,18 @@ export type ItemFormData = {
   category: Category
   department: string
   date_acquired: string
+  purchased_date: string
   warranty_exp: string
   last_checked: string
   remarks: string
   checked: boolean
+}
+
+export interface UserHistory {
+  id: string
+  item_id: string
+  user_name: string
+  date_from: string | null
+  date_to: string | null
+  created_at: string
 }
