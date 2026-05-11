@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Item, ItemFormData, Category, Condition, ItemStatus } from '@/lib/types'
@@ -31,7 +31,7 @@ const COND_CLASS: Record<string, string> = {
 
 type SortKey = 'item_no' | 'name' | 'brand' | 'serial' | 'status' | 'condition' | 'assigned_to' | 'category' | 'department' | 'date_acquired' | 'warranty_exp' | 'last_checked' | 'remarks'
 
-const COL_LABELS: { key: SortKey; label: string }[] = [
+const COL_LABELS: { key: SortKey; label: React.ReactNode }[] = [
   { key: 'item_no', label: 'No' },
   { key: 'name', label: 'Item Name' },
   { key: 'brand', label: 'Brand' },
@@ -41,9 +41,9 @@ const COL_LABELS: { key: SortKey; label: string }[] = [
   { key: 'assigned_to', label: 'Assigned To' },
   { key: 'category', label: 'Category' },
   { key: 'department', label: 'Department' },
-  { key: 'date_acquired', label: 'Purchase Date' },
-  { key: 'warranty_exp', label: 'Warranty Exp' },
-  { key: 'last_checked', label: 'Last Checked' },
+  { key: 'date_acquired', label: <><span>Purchase</span><br/><span>Date</span></> },
+  { key: 'warranty_exp', label: <><span>Warranty</span><br/><span>Exp</span></> },
+  { key: 'last_checked', label: <><span>Last</span><br/><span>Checked</span></> },
   { key: 'remarks', label: 'Remarks' },
 ]
 
