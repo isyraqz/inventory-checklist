@@ -507,12 +507,10 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {selectedItem.remarks && (
-                  <div className="panel-section">
-                    <div className="panel-section-title">Remarks</div>
-                    <p className="panel-remarks">{selectedItem.remarks}</p>
-                  </div>
-                )}
+                <div className="panel-section">
+                  <div className="panel-section-title">Remarks</div>
+                  <p className="panel-remarks">{selectedItem.remarks || '—'}</p>
+                </div>
               </div>
 
               {role === 'admin' && (
