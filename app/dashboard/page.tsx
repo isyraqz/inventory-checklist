@@ -184,7 +184,7 @@ export default function Dashboard() {
         remarks: item.remarks ?? '',
         checked: item.checked,
       })
-      setUhForm({ user_name: item.assigned_to ?? '', date_from: '', date_to: '' })
+      setUhForm({ user_name: item.assigned_to ?? '', date_from: toFormDate(item.date_acquired), date_to: '' })
     } else {
       setEditId(null)
       setForm({ ...EMPTY_FORM })
