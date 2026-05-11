@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Item, ItemFormData, Category, Condition, ItemStatus } from '@/lib/types'
+import type { Item, ItemFormData, Category, Condition, ItemStatus, MaintenanceLog } from '@/lib/types'
 import DatePicker from '@/components/DatePicker'
 import ChartPanel from '@/components/ChartPanel'
 
@@ -82,6 +82,10 @@ export default function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [showCharts, setShowCharts] = useState(false)
+  const [logs, setLogs] = useState<MaintenanceLog[]>([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  const [logInput, setLogInput] = useState('')
+  const [logSaving, setLogSaving] = useState(false)
   const toastId = useRef(0)
 
   const loadItems = useCallback(async () => {
@@ -94,6 +98,17 @@ export default function Dashboard() {
   const loadAuditChecks = useCallback(async (uid: string) => {
     const { data } = await supabase.from('audit_checks').select('item_id').eq('user_id', uid)
     setAuditChecked(new Set((data || []).map((r: { item_id: string }) => r.item_id)))
+  }, [supabase])
+
+  const loadLogs = useCallback(async (itemId: string) => {
+    setLogsLoading(true)
+    const { data } = await supabase
+      .from('maintenance_logs')
+      .select('*')
+      .eq('item_id', itemId)
+      .order('created_at', { ascending: false })
+    setLogs((data as MaintenanceLog[]) || [])
+    setLogsLoading(false)
   }, [supabase])
 
   useEffect(() => {
@@ -109,6 +124,11 @@ export default function Dashboard() {
     const saved = localStorage.getItem('inv_theme')
     if (saved === 'dark') { setTheme('dark'); document.documentElement.setAttribute('data-theme', 'dark') }
   }, [loadItems, loadAuditChecks, supabase])
+
+  useEffect(() => {
+    if (selectedItem) { setLogInput(''); loadLogs(selectedItem.id) }
+    else setLogs([])
+  }, [selectedItem, loadLogs])
 
   function toast(msg: string) {
     const id = toastId.current++
@@ -210,6 +230,19 @@ export default function Dashboard() {
     await supabase.from('audit_checks').delete().eq('user_id', userId)
     setAuditChecked(new Set())
     toast('Audit cleared')
+  }
+
+  async function addLog() {
+    if (!logInput.trim() || !selectedItem || !userId) return
+    setLogSaving(true)
+    const { error } = await supabase.from('maintenance_logs').insert({
+      item_id: selectedItem.id,
+      user_id: userId,
+      logged_by: userEmail,
+      description: logInput.trim(),
+    })
+    if (!error) { setLogInput(''); await loadLogs(selectedItem.id); toast('Log added') }
+    setLogSaving(false)
   }
 
   async function deleteItem(item: Item) {
@@ -525,6 +558,50 @@ export default function Dashboard() {
                 <div className="panel-section">
                   <div className="panel-section-title">Remarks</div>
                   <p className="panel-remarks">{selectedItem.remarks || '—'}</p>
+                </div>
+
+                {/* Maintenance log */}
+                <div className="panel-section">
+                  <div className="panel-section-title">Maintenance Log</div>
+                  {logsLoading ? (
+                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
+                  ) : logs.length === 0 ? (
+                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                      {logs.map((log, i) => (
+                        <div key={log.id} style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative' }}>
+                          {i < logs.length - 1 && (
+                            <div style={{ position: 'absolute', left: 5, top: 14, bottom: 0, width: 1, background: 'var(--border)' }} />
+                          )}
+                          <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 3, zIndex: 1 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
+                            <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
+                              {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {' · '}{log.logged_by}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {role === 'admin' && (
+                    <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                      <input
+                        type="text"
+                        value={logInput}
+                        onChange={e => setLogInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addLog()}
+                        placeholder="Add a log entry…"
+                        style={{ flex: 1, fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
+                      />
+                      <button onClick={addLog} disabled={logSaving || !logInput.trim()}
+                        className="btn btn-primary" style={{ height: 34, padding: '0 12px', fontSize: 12 }}>
+                        {logSaving ? '…' : 'Add'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

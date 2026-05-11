@@ -1,4 +1,13 @@
 export type Category = 'IT' | 'Furniture' | 'Equipment' | 'Other'
+
+export interface MaintenanceLog {
+  id: string
+  item_id: string
+  user_id: string
+  logged_by: string
+  description: string
+  created_at: string
+}
 export type Condition = 'Good' | 'Fair' | 'Poor'
 export type ItemStatus = 'Available' | 'In use' | 'Maintenance'
 
