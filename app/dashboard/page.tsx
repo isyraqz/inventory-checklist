@@ -769,10 +769,14 @@ export default function Dashboard() {
                     <input type="text" value={uhForm.user_name} onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
                       placeholder="User name" style={{ fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <input type="text" value={uhForm.date_from} onChange={e => setUhForm(f => ({ ...f, date_from: e.target.value }))}
-                        placeholder="From DD-MM-YYYY" maxLength={10} style={{ fontSize: 12, padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                      <input type="text" value={uhForm.date_to} onChange={e => setUhForm(f => ({ ...f, date_to: e.target.value }))}
-                        placeholder="To DD-MM-YYYY (optional)" maxLength={10} style={{ fontSize: 12, padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                      <div>
+                        <div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>From</div>
+                        <DatePicker value={uhForm.date_from} onChange={v => setUhForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>To (optional)</div>
+                        <DatePicker value={uhForm.date_to} onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                      </div>
                     </div>
                     <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()} className="btn btn-primary" style={{ justifyContent: 'center' }}>
                       {uhSaving ? 'Saving…' : 'Add user entry'}
