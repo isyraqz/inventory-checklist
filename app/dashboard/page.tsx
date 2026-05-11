@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Item, ItemFormData, Category, Condition, ItemStatus } from '@/lib/types'
 import DatePicker from '@/components/DatePicker'
+import ChartPanel from '@/components/ChartPanel'
 
 const EMPTY_FORM: ItemFormData = {
   name: '',
@@ -80,6 +81,7 @@ export default function Dashboard() {
   const [auditChecked, setAuditChecked] = useState<Set<string>>(new Set())
   const [userId, setUserId] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [showCharts, setShowCharts] = useState(false)
   const toastId = useRef(0)
 
   const loadItems = useCallback(async () => {
@@ -355,6 +357,16 @@ export default function Dashboard() {
               <option>Equipment</option>
               <option>Other</option>
             </select>
+            <button
+              className="btn"
+              onClick={() => setShowCharts(s => !s)}
+              style={showCharts ? { background: '#1e3a5f', color: '#fff', borderColor: '#1e3a5f' } : { borderColor: '#1e3a5f', color: '#1e3a5f' }}
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3Zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3Z"/>
+              </svg>
+              Charts
+            </button>
             <button className="btn" onClick={exportCSV}>
               <svg viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 1.25a.75.75 0 0 1 .75.75v6.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L7.25 8.19V2A.75.75 0 0 1 8 1.25ZM2 13.25a.75.75 0 0 0 0 1.5h12a.75.75 0 0 0 0-1.5H2Z" />
@@ -362,6 +374,9 @@ export default function Dashboard() {
               Export CSV
             </button>
           </div>
+
+          {/* Chart panel */}
+          {showCharts && <ChartPanel items={items} />}
 
           {/* Audit bar + Add button */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
