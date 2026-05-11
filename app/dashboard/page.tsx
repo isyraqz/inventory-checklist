@@ -184,9 +184,11 @@ export default function Dashboard() {
         remarks: item.remarks ?? '',
         checked: item.checked,
       })
+      setUhForm({ user_name: item.assigned_to ?? '', date_from: '', date_to: '' })
     } else {
       setEditId(null)
       setForm({ ...EMPTY_FORM })
+      setUhForm({ user_name: '', date_from: '', date_to: '' })
     }
     setNameError(false)
     setModalOpen(true)
