@@ -304,13 +304,13 @@ export default function Dashboard() {
                 <div className="stat-sub">{pct}% verified</div>
               </div>
             )}
-            <div className="stat-card">
-              <div className="stat-label">Available</div>
-              <div className="stat-value">{avail}</div>
+            <div className="stat-card" style={{ background: '#e6f4ea', borderColor: '#c3e6cb' }}>
+              <div className="stat-label" style={{ color: '#276b3a' }}>Available</div>
+              <div className="stat-value" style={{ color: '#276b3a' }}>{avail}</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-label">Maintenance</div>
-              <div className="stat-value">{maint}</div>
+            <div className="stat-card" style={{ background: '#fce8e8', borderColor: '#f5c6c6' }}>
+              <div className="stat-label" style={{ color: '#b91c1c' }}>Maintenance</div>
+              <div className="stat-value" style={{ color: '#b91c1c' }}>{maint}</div>
             </div>
           </div>
 
