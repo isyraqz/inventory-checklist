@@ -343,7 +343,7 @@ export default function Dashboard() {
             <path d="M9.5 0v3.5A1.5 1.5 0 0 0 11 5h3" stroke={role === 'admin' ? 'rgba(255,255,255,0.4)' : 'var(--border-strong)'} strokeWidth="1" fill="none"/>
             <path d="M6 8h4M6 10.5h3" stroke={role === 'admin' ? 'rgba(255,255,255,0.6)' : 'var(--text-hint)'} strokeWidth="1" strokeLinecap="round"/>
           </svg>
-          Verus Virtus — Inventory Checklist
+          <span className="logo-text">Verus Virtus — Inventory Checklist</span>
         </div>
         <div className="header-right">
           {userEmail && (
@@ -527,6 +527,14 @@ export default function Dashboard() {
             </table>
           </div>
         </main>
+
+        {/* Mobile backdrop for detail panel */}
+        {selectedItem && (
+          <div onClick={() => setSelectedItem(null)} style={{
+            display: 'none',
+            position: 'fixed', inset: 0, zIndex: 99, background: 'rgba(0,0,0,0.3)',
+          }} className="panel-backdrop" />
+        )}
 
         {/* Detail Panel */}
         <aside className={`detail-panel${selectedItem ? ' open' : ''}`}>
