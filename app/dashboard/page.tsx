@@ -37,7 +37,7 @@ const COL_LABELS: { key: SortKey; label: string }[] = [
   { key: 'brand',        label: 'Brand' },
   { key: 'status',       label: 'Status' },
   { key: 'assigned_to',  label: 'Assigned To' },
-  { key: 'date_acquired',label: 'Purchase Date' },
+  { key: 'date_acquired',label: 'Issue Date' },
   { key: 'remarks',      label: 'Remarks' },
 ]
 
@@ -225,7 +225,7 @@ export default function Dashboard() {
   }
 
   function exportCSV() {
-    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Purchase Date', 'Warranty Exp', 'Last Checked', 'Remarks']
+    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Issue Date', 'Warranty Exp', 'Last Checked', 'Remarks']
     const rows = items.map(i =>
       [
         String(i.item_no ?? '').padStart(3, '0'), i.name, i.brand ?? '', i.serial,
@@ -494,7 +494,7 @@ export default function Dashboard() {
                 <div className="panel-section">
                   <div className="panel-section-title">Dates</div>
                   <div className="detail-row">
-                    <span className="detail-key">Purchase date</span>
+                    <span className="detail-key">Issue date</span>
                     <span className="detail-val mono">{fmtDate(selectedItem.date_acquired)}</span>
                   </div>
                   <div className="detail-row">
@@ -588,7 +588,7 @@ export default function Dashboard() {
                   placeholder="e.g. IT, HR, Finance" />
               </div>
               <div className="form-field">
-                <label>Purchase date</label>
+                <label>Issue date</label>
                 <DatePicker value={form.date_acquired} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} />
               </div>
               <div className="form-field">
