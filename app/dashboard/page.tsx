@@ -619,29 +619,6 @@ export default function Dashboard() {
                       ))}
                     </div>
                   )}
-                  {role === 'admin' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-                      <input
-                        type="text"
-                        value={uhForm.user_name}
-                        onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
-                        placeholder="User name"
-                        style={{ fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
-                      />
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <input type="text" value={uhForm.date_from} onChange={e => setUhForm(f => ({ ...f, date_from: e.target.value }))}
-                          placeholder="From DD-MM-YYYY" maxLength={10}
-                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                        <input type="text" value={uhForm.date_to} onChange={e => setUhForm(f => ({ ...f, date_to: e.target.value }))}
-                          placeholder="To (optional)" maxLength={10}
-                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                      </div>
-                      <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()}
-                        className="btn btn-primary" style={{ height: 32, fontSize: 12, justifyContent: 'center' }}>
-                        {uhSaving ? 'Saving…' : 'Add entry'}
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* Maintenance log */}
@@ -668,17 +645,6 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ))}
-                    </div>
-                  )}
-                  {role === 'admin' && (
-                    <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                      <input type="text" value={logInput} onChange={e => setLogInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && addLog()} placeholder="Add a log entry…"
-                        style={{ flex: 1, fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                      <button onClick={addLog} disabled={logSaving || !logInput.trim()}
-                        className="btn btn-primary" style={{ height: 34, padding: '0 12px', fontSize: 12 }}>
-                        {logSaving ? '…' : 'Add'}
-                      </button>
                     </div>
                   )}
                 </div>
@@ -778,6 +744,73 @@ export default function Dashboard() {
                   placeholder="Any additional details…" />
               </div>
             </div>
+
+            {/* User History & Maintenance Log — edit mode only */}
+            {editId && (
+              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+
+                {/* User History */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', marginBottom: 10 }}>User History</div>
+                  {userHistory.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                      {userHistory.map(h => (
+                        <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontWeight: 500 }}>{h.user_name}</span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-hint)' }}>
+                            {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <input type="text" value={uhForm.user_name} onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
+                      placeholder="User name" style={{ fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <input type="text" value={uhForm.date_from} onChange={e => setUhForm(f => ({ ...f, date_from: e.target.value }))}
+                        placeholder="From DD-MM-YYYY" maxLength={10} style={{ fontSize: 12, padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                      <input type="text" value={uhForm.date_to} onChange={e => setUhForm(f => ({ ...f, date_to: e.target.value }))}
+                        placeholder="To DD-MM-YYYY (optional)" maxLength={10} style={{ fontSize: 12, padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                    </div>
+                    <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()} className="btn btn-primary" style={{ justifyContent: 'center' }}>
+                      {uhSaving ? 'Saving…' : 'Add user entry'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Maintenance Log */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', marginBottom: 10 }}>Maintenance Log</div>
+                  {logs.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 10 }}>
+                      {logs.map((log, i) => (
+                        <div key={log.id} style={{ display: 'flex', gap: 10, paddingBottom: 10, position: 'relative' }}>
+                          {i < logs.length - 1 && <div style={{ position: 'absolute', left: 5, top: 13, bottom: 0, width: 1, background: 'var(--border)' }} />}
+                          <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 3, zIndex: 1 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
+                            <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 2, fontFamily: 'var(--mono)' }}>
+                              {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input type="text" value={logInput} onChange={e => setLogInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addLog()} placeholder="Add a log entry…"
+                      style={{ flex: 1, fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                    <button onClick={addLog} disabled={logSaving || !logInput.trim()} className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>
+                      {logSaving ? '…' : 'Add log'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="modal-footer">
               <button className="btn" onClick={() => setModalOpen(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={saveItem} disabled={saving}>
