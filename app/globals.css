@@ -527,6 +527,51 @@ input[type="checkbox"] {
 .auth-link a { color: var(--text); font-weight: 500; text-decoration: none; }
 .auth-link a:hover { text-decoration: underline; }
 
+/* ── Bulk action bar ── */
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 0.75rem;
+  font-size: 13px;
+  color: var(--text);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Mobile card list ── */
+.mobile-list {
+  display: none;
+}
+.mobile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+.mobile-card:hover { background: var(--surface2); }
+.mobile-card.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+/* ── Mobile backdrop (hidden on desktop) ── */
+.panel-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.4);
+}
+
 @media (max-width: 640px) {
   /* Header */
   .app-header { padding: 0 1rem; }
@@ -582,6 +627,10 @@ input[type="checkbox"] {
 
   /* Backdrop for mobile panel */
   .panel-backdrop { display: block !important; }
+
+  /* Show mobile card list, hide desktop table */
+  .mobile-list { display: block; }
+  .table-card { display: none; }
 
   /* Toast: stretch to edges */
   .toast-wrap { right: 1rem; left: 1rem; bottom: 1rem; }
