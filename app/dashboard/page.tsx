@@ -497,9 +497,9 @@ export default function Dashboard() {
                     </td>
                     <td>{item.category}</td>
                     <td>{item.department || '—'}</td>
-                    <td className="mono">{fmtDate(item.date_acquired)}</td>
-                    <td className="mono">{fmtDate(item.warranty_exp)}</td>
-                    <td className="mono">{fmtDate(item.last_checked)}</td>
+                    <td className="mono" style={{ fontSize: 10 }}>{fmtDate(item.date_acquired)}</td>
+                    <td className="mono" style={{ fontSize: 10 }}>{fmtDate(item.warranty_exp)}</td>
+                    <td className="mono" style={{ fontSize: 10 }}>{fmtDate(item.last_checked)}</td>
                     <td style={{ color: 'var(--text-muted)', fontSize: 11, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.remarks || '—'}
                     </td>
