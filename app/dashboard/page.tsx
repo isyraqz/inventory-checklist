@@ -73,7 +73,7 @@ export default function Dashboard() {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterDept, setFilterDept] = useState('')
+  const [filterCat, setFilterCat] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('item_no')
   const [sortDir, setSortDir] = useState(1)
@@ -276,7 +276,7 @@ export default function Dashboard() {
     .filter(i =>
       (!search || [i.name, i.brand, i.serial, i.assigned_to, i.department, i.remarks]
         .some(f => (f || '').toLowerCase().includes(search.toLowerCase()))) &&
-      (!filterDept || i.department === filterDept) &&
+      (!filterCat || i.category === filterCat) &&
       (!filterStatus || i.status === filterStatus)
     )
     .sort((a, b) => {
@@ -380,9 +380,12 @@ export default function Dashboard() {
             <option>In use</option>
             <option>Maintenance</option>
           </select>
-          <select value={filterDept} onChange={e => setFilterDept(e.target.value)}>
-            <option value="">All departments</option>
-            {departments.map(d => <option key={d}>{d}</option>)}
+          <select value={filterCat} onChange={e => setFilterCat(e.target.value)}>
+            <option value="">All categories</option>
+            <option>IT</option>
+            <option>Furniture</option>
+            <option>Equipment</option>
+            <option>Other</option>
           </select>
           <button className="btn" onClick={exportCSV}>
             <svg viewBox="0 0 16 16" fill="currentColor">
