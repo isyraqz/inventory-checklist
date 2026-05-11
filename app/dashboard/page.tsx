@@ -373,6 +373,20 @@ export default function Dashboard() {
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '0 6px', color: 'var(--text-hint)', lineHeight: 1,
+                  fontSize: 14, display: 'flex', alignItems: 'center',
+                }}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">All statuses</option>
