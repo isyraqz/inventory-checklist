@@ -51,6 +51,20 @@ function fmtDate(val: string | null | undefined) {
   return val.split('-').reverse().join('-')
 }
 
+// "DD-MM-YYYY" → "YYYY-MM-DD" for DB storage; returns '' if invalid
+function toDBDate(dmy: string): string {
+  if (!dmy) return ''
+  const [d, m, y] = dmy.split('-')
+  if (!d || !m || !y || y.length !== 4) return ''
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
+}
+
+// "YYYY-MM-DD" → "DD-MM-YYYY" for form display
+function toFormDate(ymd: string | null | undefined): string {
+  if (!ymd) return ''
+  return ymd.split('-').reverse().join('-')
+}
+
 export default function Dashboard() {
   const router = useRouter()
   const supabase = createClient()
@@ -147,9 +161,9 @@ export default function Dashboard() {
       assigned_to: item.assigned_to,
       category: item.category,
       department: item.department ?? '',
-      date_acquired: item.date_acquired ?? '',
-      warranty_exp: item.warranty_exp ?? '',
-      last_checked: item.last_checked ?? '',
+      date_acquired: toFormDate(item.date_acquired),
+      warranty_exp: toFormDate(item.warranty_exp),
+      last_checked: toFormDate(item.last_checked),
       remarks: item.remarks ?? '',
       checked: item.checked,
     })
@@ -173,9 +187,9 @@ export default function Dashboard() {
       assigned_to: form.assigned_to,
       category: form.category,
       department: form.department,
-      date_acquired: form.date_acquired || null,
-      warranty_exp: form.warranty_exp || null,
-      last_checked: form.last_checked || null,
+      date_acquired: toDBDate(form.date_acquired) || null,
+      warranty_exp: toDBDate(form.warranty_exp) || null,
+      last_checked: toDBDate(form.last_checked) || null,
       remarks: form.remarks,
     }
 
@@ -590,25 +604,31 @@ export default function Dashboard() {
               <div className="form-field">
                 <label>Purchase date</label>
                 <input
-                  type="date"
+                  type="text"
                   value={form.date_acquired}
                   onChange={e => setForm(f => ({ ...f, date_acquired: e.target.value }))}
+                  placeholder="DD-MM-YYYY"
+                  maxLength={10}
                 />
               </div>
               <div className="form-field">
                 <label>Warranty expiry</label>
                 <input
-                  type="date"
+                  type="text"
                   value={form.warranty_exp}
                   onChange={e => setForm(f => ({ ...f, warranty_exp: e.target.value }))}
+                  placeholder="DD-MM-YYYY"
+                  maxLength={10}
                 />
               </div>
               <div className="form-field">
                 <label>Last checked</label>
                 <input
-                  type="date"
+                  type="text"
                   value={form.last_checked}
                   onChange={e => setForm(f => ({ ...f, last_checked: e.target.value }))}
+                  placeholder="DD-MM-YYYY"
+                  maxLength={10}
                 />
               </div>
               <div className="form-field full">
