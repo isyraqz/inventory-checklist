@@ -31,7 +31,7 @@ const COND_CLASS: Record<string, string> = {
 
 type SortKey = 'item_no' | 'name' | 'brand' | 'serial' | 'status' | 'condition' | 'assigned_to' | 'category' | 'department' | 'date_acquired' | 'warranty_exp' | 'last_checked' | 'remarks'
 
-const COL_LABELS: { key: SortKey; label: React.ReactNode }[] = [
+const COL_LABELS: { key: SortKey; label: React.ReactNode; width?: number }[] = [
   { key: 'item_no', label: 'No' },
   { key: 'name', label: 'Item Name' },
   { key: 'brand', label: 'Brand' },
@@ -43,8 +43,8 @@ const COL_LABELS: { key: SortKey; label: React.ReactNode }[] = [
   { key: 'department', label: 'Department' },
   { key: 'date_acquired', label: <><span>Purchase</span><br/><span>Date</span></> },
   { key: 'warranty_exp', label: <><span>Warranty</span><br/><span>Exp</span></> },
-  { key: 'last_checked', label: <><span>Last</span><br/><span>Checked</span></> },
-  { key: 'remarks', label: 'Remarks' },
+  { key: 'last_checked', label: <><span>Last</span><br/><span>Checked</span></>, width: 90 },
+  { key: 'remarks', label: 'Remarks', width: 240 },
 ]
 
 function fmtDate(val: string | null | undefined) {
@@ -437,11 +437,12 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   {role === 'admin' && <th style={{ width: 36, cursor: 'default' }} />}
-                  {COL_LABELS.map(({ key, label }) => (
+                  {COL_LABELS.map(({ key, label, width }) => (
                     <th
                       key={key}
                       onClick={() => handleSort(key)}
                       className={sortKey === key ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : ''}
+                      style={width ? { minWidth: width } : undefined}
                     >
                       {label}
                     </th>
