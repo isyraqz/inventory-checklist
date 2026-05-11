@@ -7,39 +7,49 @@ import type { Item, ItemFormData, Category, Condition, ItemStatus } from '@/lib/
 
 const EMPTY_FORM: ItemFormData = {
   name: '',
+  brand: '',
   serial: '',
+  status: 'Available',
+  condition: 'Good',
   assigned_to: '',
   category: 'IT',
-  condition: 'Good',
-  status: 'Available',
-  location: '',
+  department: '',
   date_acquired: '',
-  notes: '',
+  warranty_exp: '',
+  last_checked: '',
+  remarks: '',
   checked: false,
 }
 
-const CAT_CLASS: Record<string, string> = {
-  IT: 'b-it', Furniture: 'b-furniture', Equipment: 'b-equipment', Other: 'b-other',
+const STATUS_CLASS: Record<string, string> = {
+  Available: 'b-available', 'In use': 'b-inuse', Maintenance: 'b-maintenance',
 }
 const COND_CLASS: Record<string, string> = {
   Good: 'b-good', Fair: 'b-fair', Poor: 'b-poor',
 }
-const STATUS_CLASS: Record<string, string> = {
-  Available: 'b-available', 'In use': 'b-inuse', Maintenance: 'b-maintenance',
-}
 
-type SortKey = 'name' | 'serial' | 'assigned_to' | 'category' | 'condition' | 'status' | 'location' | 'date_acquired'
+type SortKey = 'item_no' | 'name' | 'brand' | 'serial' | 'status' | 'condition' | 'assigned_to' | 'category' | 'department' | 'date_acquired' | 'warranty_exp' | 'last_checked' | 'remarks'
 
 const COL_LABELS: { key: SortKey; label: string }[] = [
-  { key: 'name', label: 'Item name' },
-  { key: 'serial', label: 'Serial no.' },
-  { key: 'assigned_to', label: 'Assigned to' },
-  { key: 'category', label: 'Category' },
-  { key: 'condition', label: 'Condition' },
+  { key: 'item_no', label: 'No' },
+  { key: 'name', label: 'Item Name' },
+  { key: 'brand', label: 'Brand' },
+  { key: 'serial', label: 'Serial Number' },
   { key: 'status', label: 'Status' },
-  { key: 'location', label: 'Location' },
-  { key: 'date_acquired', label: 'Date in' },
+  { key: 'condition', label: 'Condition' },
+  { key: 'assigned_to', label: 'Assigned To' },
+  { key: 'category', label: 'Category' },
+  { key: 'department', label: 'Department' },
+  { key: 'date_acquired', label: 'Purchase Date' },
+  { key: 'warranty_exp', label: 'Warranty Exp' },
+  { key: 'last_checked', label: 'Last Checked' },
+  { key: 'remarks', label: 'Remarks' },
 ]
+
+function fmtDate(val: string | null | undefined) {
+  if (!val) return '—'
+  return val.split('-').reverse().join('-')
+}
 
 export default function Dashboard() {
   const router = useRouter()
@@ -48,9 +58,9 @@ export default function Dashboard() {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterCat, setFilterCat] = useState('')
+  const [filterDept, setFilterDept] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortKey, setSortKey] = useState<SortKey>('item_no')
   const [sortDir, setSortDir] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -67,7 +77,7 @@ export default function Dashboard() {
 
   const loadItems = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase.from('items').select('*').order('created_at', { ascending: false })
+    const { data } = await supabase.from('items').select('*').order('item_no', { ascending: true })
     setItems((data as Item[]) || [])
     setLoading(false)
   }, [supabase])
@@ -130,14 +140,17 @@ export default function Dashboard() {
     setEditId(item.id)
     setForm({
       name: item.name,
+      brand: item.brand ?? '',
       serial: item.serial,
+      status: item.status,
+      condition: item.condition,
       assigned_to: item.assigned_to,
       category: item.category,
-      condition: item.condition,
-      status: item.status,
-      location: item.location,
+      department: item.department ?? '',
       date_acquired: item.date_acquired ?? '',
-      notes: item.notes,
+      warranty_exp: item.warranty_exp ?? '',
+      last_checked: item.last_checked ?? '',
+      remarks: item.remarks ?? '',
       checked: item.checked,
     })
     setNameError(false)
@@ -151,16 +164,31 @@ export default function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
+    const payload = {
+      name: form.name,
+      brand: form.brand,
+      serial: form.serial,
+      status: form.status,
+      condition: form.condition,
+      assigned_to: form.assigned_to,
+      category: form.category,
+      department: form.department,
+      date_acquired: form.date_acquired || null,
+      warranty_exp: form.warranty_exp || null,
+      last_checked: form.last_checked || null,
+      remarks: form.remarks,
+    }
+
     if (editId) {
       const { error } = await supabase
         .from('items')
-        .update({ ...form, updated_at: new Date().toISOString() })
+        .update({ ...payload, updated_at: new Date().toISOString() })
         .eq('id', editId)
       if (!error) { toast('Item updated'); await loadItems() }
     } else {
       const { error } = await supabase
         .from('items')
-        .insert({ ...form, user_id: user.id })
+        .insert({ ...payload, user_id: user.id })
       if (!error) { toast('Item added'); await loadItems() }
     }
     setSaving(false)
@@ -199,9 +227,23 @@ export default function Dashboard() {
   }
 
   function exportCSV() {
-    const headers = ['Item', 'Serial No', 'Assigned To', 'Category', 'Condition', 'Status', 'Location', 'Date Acquired', 'Notes', 'Checked In']
+    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Purchase Date', 'Warranty Exp', 'Last Checked', 'Remarks']
     const rows = items.map(i =>
-      [i.name, i.serial, i.assigned_to, i.category, i.condition, i.status, i.location, i.date_acquired ?? '', i.notes, i.checked ? 'Yes' : 'No']
+      [
+        String(i.item_no ?? '').padStart(3, '0'),
+        i.name,
+        i.brand ?? '',
+        i.serial,
+        i.status,
+        i.condition,
+        i.assigned_to,
+        i.category,
+        i.department ?? '',
+        fmtDate(i.date_acquired),
+        fmtDate(i.warranty_exp),
+        fmtDate(i.last_checked),
+        i.remarks ?? '',
+      ]
         .map(v => `"${(v || '').replace(/"/g, '""')}"`)
         .join(',')
     )
@@ -213,11 +255,13 @@ export default function Dashboard() {
     toast('CSV exported')
   }
 
+  const departments = Array.from(new Set(items.map(i => i.department).filter(Boolean))).sort()
+
   const filtered = items
     .filter(i =>
-      (!search || [i.name, i.serial, i.assigned_to, i.location, i.notes]
+      (!search || [i.name, i.brand, i.serial, i.assigned_to, i.department, i.remarks]
         .some(f => (f || '').toLowerCase().includes(search.toLowerCase()))) &&
-      (!filterCat || i.category === filterCat) &&
+      (!filterDept || i.department === filterDept) &&
       (!filterStatus || i.status === filterStatus)
     )
     .sort((a, b) => {
@@ -232,6 +276,8 @@ export default function Dashboard() {
   const avail = items.filter(i => i.status === 'Available').length
   const maint = items.filter(i => i.status === 'Maintenance').length
   const pct = total ? Math.round(checkedCount / total * 100) : 0
+
+  const colSpanFull = COL_LABELS.length + (role === 'admin' ? 2 : 0)
 
   return (
     <>
@@ -259,7 +305,6 @@ export default function Dashboard() {
             style={role === 'admin' ? { background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' } : {}}>
             Sign out
           </button>
-
         </div>
       </header>
 
@@ -313,32 +358,21 @@ export default function Dashboard() {
             <input
               type="text"
               className="search-input"
-              placeholder="Search items, serial, user, location…"
+              placeholder="Search items, serial, brand, department…"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <select value={filterCat} onChange={e => setFilterCat(e.target.value)}>
-            <option value="">All categories</option>
-            <option>IT</option>
-            <option>Furniture</option>
-            <option>Equipment</option>
-            <option>Other</option>
-          </select>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">All statuses</option>
             <option>Available</option>
             <option>In use</option>
             <option>Maintenance</option>
           </select>
-          {role === 'admin' && (
-            <button className="btn btn-primary" onClick={openModal}>
-              <svg viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
-              </svg>
-              Add item
-            </button>
-          )}
+          <select value={filterDept} onChange={e => setFilterDept(e.target.value)}>
+            <option value="">All departments</option>
+            {departments.map(d => <option key={d}>{d}</option>)}
+          </select>
           <button className="btn" onClick={exportCSV}>
             <svg viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 1.25a.75.75 0 0 1 .75.75v6.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L7.25 8.19V2A.75.75 0 0 1 8 1.25ZM2 13.25a.75.75 0 0 0 0 1.5h12a.75.75 0 0 0 0-1.5H2Z" />
@@ -347,15 +381,25 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Audit bar */}
-        {role === 'admin' && checkedCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--accent)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '0.75rem', fontSize: 13 }}>
-            <span style={{ color: 'var(--accent-fg)', fontWeight: 500 }}>✓ {checkedCount} item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
-            <button onClick={clearAudit} style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.15)', color: 'var(--accent-fg)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              Clear audit
+        {/* Audit bar + Add button row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
+          {role === 'admin' && checkedCount > 0 && (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--accent)', borderRadius: 'var(--radius)', padding: '10px 16px', fontSize: 13 }}>
+              <span style={{ color: 'var(--accent-fg)', fontWeight: 500 }}>✓ {checkedCount} item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
+              <button onClick={clearAudit} style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.15)', color: 'var(--accent-fg)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Clear audit
+              </button>
+            </div>
+          )}
+          {role === 'admin' && (
+            <button className="btn btn-primary" onClick={openModal} style={{ marginLeft: 'auto' }}>
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
+              </svg>
+              Add item
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Table */}
         <div className="table-card">
@@ -379,13 +423,13 @@ export default function Dashboard() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={10}>
+                    <td colSpan={colSpanFull}>
                       <div className="empty-state"><p>Loading…</p></div>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={10}>
+                    <td colSpan={colSpanFull}>
                       <div className="empty-state">
                         <div className="empty-icon">📦</div>
                         <p>No items found. Try adjusting your search or filters.</p>
@@ -403,22 +447,33 @@ export default function Dashboard() {
                         />
                       </td>
                     )}
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-hint)' }}>
+                      {String(item.item_no ?? '').padStart(3, '0')}
+                    </td>
                     <td className="item-name">{item.name}</td>
+                    <td>{item.brand || '—'}</td>
                     <td className="mono">{item.serial || '—'}</td>
                     <td>
-                      {item.assigned_to || (
-                        <span style={{ color: 'var(--text-hint)' }}>Unassigned</span>
-                      )}
-                    </td>
-                    <td>{item.category}</td>
-                    <td>{item.condition}</td>
-                    <td>
-                      <span className={`badge ${STATUS_CLASS[item.status] ?? 'b-other'}`}>
+                      <span className={`badge ${STATUS_CLASS[item.status] ?? ''}`}>
                         {item.status}
                       </span>
                     </td>
-                    <td>{item.location || '—'}</td>
-                    <td className="mono">{item.date_acquired ? item.date_acquired.split('-').reverse().join('-') : '—'}</td>
+                    <td>
+                      <span className={`badge ${COND_CLASS[item.condition] ?? ''}`}>
+                        {item.condition}
+                      </span>
+                    </td>
+                    <td>
+                      {item.assigned_to || <span style={{ color: 'var(--text-hint)' }}>—</span>}
+                    </td>
+                    <td>{item.category}</td>
+                    <td>{item.department || '—'}</td>
+                    <td className="mono">{fmtDate(item.date_acquired)}</td>
+                    <td className="mono">{fmtDate(item.warranty_exp)}</td>
+                    <td className="mono">{fmtDate(item.last_checked)}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 11, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.remarks || '—'}
+                    </td>
                     {role === 'admin' && (
                       <td className="no-strike">
                         <div className="actions">
@@ -463,6 +518,15 @@ export default function Dashboard() {
                 />
               </div>
               <div className="form-field">
+                <label>Brand</label>
+                <input
+                  type="text"
+                  value={form.brand}
+                  onChange={e => setForm(f => ({ ...f, brand: e.target.value }))}
+                  placeholder="e.g. Dell"
+                />
+              </div>
+              <div className="form-field">
                 <label>Serial number</label>
                 <input
                   type="text"
@@ -470,6 +534,28 @@ export default function Dashboard() {
                   onChange={e => setForm(f => ({ ...f, serial: e.target.value }))}
                   placeholder="e.g. SN-DL5520-001"
                 />
+              </div>
+              <div className="form-field">
+                <label>Status</label>
+                <select
+                  value={form.status}
+                  onChange={e => setForm(f => ({ ...f, status: e.target.value as ItemStatus }))}
+                >
+                  <option>Available</option>
+                  <option>In use</option>
+                  <option>Maintenance</option>
+                </select>
+              </div>
+              <div className="form-field">
+                <label>Condition</label>
+                <select
+                  value={form.condition}
+                  onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}
+                >
+                  <option>Good</option>
+                  <option>Fair</option>
+                  <option>Poor</option>
+                </select>
               </div>
               <div className="form-field">
                 <label>Assigned to</label>
@@ -493,49 +579,43 @@ export default function Dashboard() {
                 </select>
               </div>
               <div className="form-field">
-                <label>Condition</label>
-                <select
-                  value={form.condition}
-                  onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}
-                >
-                  <option>Good</option>
-                  <option>Fair</option>
-                  <option>Poor</option>
-                </select>
-              </div>
-              <div className="form-field">
-                <label>Status</label>
-                <select
-                  value={form.status}
-                  onChange={e => setForm(f => ({ ...f, status: e.target.value as ItemStatus }))}
-                >
-                  <option>Available</option>
-                  <option>In use</option>
-                  <option>Maintenance</option>
-                </select>
-              </div>
-              <div className="form-field">
-                <label>Location</label>
+                <label>Department</label>
                 <input
                   type="text"
-                  value={form.location}
-                  onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                  placeholder="e.g. Office A"
+                  value={form.department}
+                  onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
+                  placeholder="e.g. IT, HR, Finance"
                 />
               </div>
               <div className="form-field">
-                <label>Date acquired</label>
+                <label>Purchase date</label>
                 <input
                   type="date"
                   value={form.date_acquired}
                   onChange={e => setForm(f => ({ ...f, date_acquired: e.target.value }))}
                 />
               </div>
+              <div className="form-field">
+                <label>Warranty expiry</label>
+                <input
+                  type="date"
+                  value={form.warranty_exp}
+                  onChange={e => setForm(f => ({ ...f, warranty_exp: e.target.value }))}
+                />
+              </div>
+              <div className="form-field">
+                <label>Last checked</label>
+                <input
+                  type="date"
+                  value={form.last_checked}
+                  onChange={e => setForm(f => ({ ...f, last_checked: e.target.value }))}
+                />
+              </div>
               <div className="form-field full">
-                <label>Notes</label>
+                <label>Remarks</label>
                 <textarea
-                  value={form.notes}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  value={form.remarks}
+                  onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))}
                   placeholder="Any additional details…"
                 />
               </div>

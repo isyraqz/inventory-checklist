@@ -5,14 +5,20 @@ export type ItemStatus = 'Available' | 'In use' | 'Maintenance'
 export interface Item {
   id: string
   user_id: string
+  item_no: number
   name: string
+  brand: string
   serial: string
+  status: ItemStatus
+  condition: Condition
   assigned_to: string
   category: Category
-  condition: Condition
-  status: ItemStatus
-  location: string
+  department: string
   date_acquired: string | null
+  warranty_exp: string | null
+  last_checked: string | null
+  remarks: string
+  location: string
   notes: string
   checked: boolean
   created_at: string
@@ -21,13 +27,16 @@ export interface Item {
 
 export type ItemFormData = {
   name: string
+  brand: string
   serial: string
+  status: ItemStatus
+  condition: Condition
   assigned_to: string
   category: Category
-  condition: Condition
-  status: ItemStatus
-  location: string
+  department: string
   date_acquired: string
-  notes: string
+  warranty_exp: string
+  last_checked: string
+  remarks: string
   checked: boolean
 }
