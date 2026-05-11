@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Item, ItemFormData, Category, Condition, ItemStatus } from '@/lib/types'
+import DatePicker from '@/components/DatePicker'
 
 const EMPTY_FORM: ItemFormData = {
   name: '',
@@ -599,32 +600,23 @@ export default function Dashboard() {
               </div>
               <div className="form-field">
                 <label>Purchase date</label>
-                <input
-                  type="text"
+                <DatePicker
                   value={form.date_acquired}
-                  onChange={e => setForm(f => ({ ...f, date_acquired: e.target.value }))}
-                  placeholder="DD-MM-YYYY"
-                  maxLength={10}
+                  onChange={v => setForm(f => ({ ...f, date_acquired: v }))}
                 />
               </div>
               <div className="form-field">
                 <label>Warranty expiry</label>
-                <input
-                  type="text"
+                <DatePicker
                   value={form.warranty_exp}
-                  onChange={e => setForm(f => ({ ...f, warranty_exp: e.target.value }))}
-                  placeholder="DD-MM-YYYY"
-                  maxLength={10}
+                  onChange={v => setForm(f => ({ ...f, warranty_exp: v }))}
                 />
               </div>
               <div className="form-field">
                 <label>Last checked</label>
-                <input
-                  type="text"
+                <DatePicker
                   value={form.last_checked}
-                  onChange={e => setForm(f => ({ ...f, last_checked: e.target.value }))}
-                  placeholder="DD-MM-YYYY"
-                  maxLength={10}
+                  onChange={v => setForm(f => ({ ...f, last_checked: v }))}
                 />
               </div>
               <div className="form-field full">
