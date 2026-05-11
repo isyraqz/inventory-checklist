@@ -29,10 +29,9 @@ const COND_CLASS: Record<string, string> = {
   Good: 'b-good', Fair: 'b-fair', Poor: 'b-poor',
 }
 
-type SortKey = 'item_no' | 'name' | 'brand' | 'status' | 'assigned_to' | 'date_acquired' | 'remarks'
+type SortKey = 'name' | 'brand' | 'status' | 'assigned_to' | 'date_acquired' | 'remarks'
 
 const COL_LABELS: { key: SortKey; label: string }[] = [
-  { key: 'item_no',      label: 'No' },
   { key: 'name',         label: 'Item Name' },
   { key: 'brand',        label: 'Brand' },
   { key: 'status',       label: 'Status' },
@@ -67,7 +66,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('item_no')
+  const [sortKey, setSortKey] = useState<SortKey>('brand')
   const [sortDir, setSortDir] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -259,7 +258,7 @@ export default function Dashboard() {
   const avail = items.filter(i => i.status === 'Available').length
   const maint = items.filter(i => i.status === 'Maintenance').length
   const pct = total ? Math.round(checkedCount / total * 100) : 0
-  const colSpanFull = COL_LABELS.length + (role === 'admin' ? 1 : 0)
+  const colSpanFull = COL_LABELS.length + 1 + (role === 'admin' ? 1 : 0)
 
   return (
     <>
@@ -390,6 +389,7 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   {role === 'admin' && <th style={{ width: 36, cursor: 'default' }} />}
+                  <th style={{ width: 48, cursor: 'default', color: 'var(--text-hint)' }}>No</th>
                   {COL_LABELS.map(({ key, label }) => (
                     <th key={key} onClick={() => handleSort(key)}
                       className={sortKey === key ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : ''}>
@@ -408,7 +408,7 @@ export default function Dashboard() {
                       <p>No items found. Try adjusting your search or filters.</p>
                     </div>
                   </td></tr>
-                ) : filtered.map(item => (
+                ) : filtered.map((item, idx) => (
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItem(prev => prev?.id === item.id ? null : item)}
@@ -423,7 +423,7 @@ export default function Dashboard() {
                       </td>
                     )}
                     <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-hint)' }}>
-                      {String(item.item_no ?? '').padStart(3, '0')}
+                      {String(idx + 1).padStart(3, '0')}
                     </td>
                     <td className="item-name">{item.name}</td>
                     <td>{item.brand || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
