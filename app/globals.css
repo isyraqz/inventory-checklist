@@ -95,7 +95,74 @@ body {
 }
 
 /* ── Layout ── */
-.app-body { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+.dashboard-layout {
+  display: flex;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+.app-body {
+  flex: 1;
+  padding: 1.75rem 2rem;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Detail Panel ── */
+.detail-panel {
+  width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s cubic-bezier(.4,0,.2,1);
+}
+.detail-panel.open { width: 300px; }
+.panel-header {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.panel-title { font-size: 14px; font-weight: 600; line-height: 1.35; }
+.panel-sub { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
+.panel-close {
+  width: 26px; height: 26px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-hint); font-size: 14px;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.panel-close:hover { background: var(--surface2); color: var(--text); }
+.panel-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+.panel-section { margin-bottom: 20px; }
+.panel-section-title {
+  font-size: 9px; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-hint); margin-bottom: 8px;
+}
+.detail-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px solid var(--border); gap: 8px;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-key { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+.detail-val { font-size: 12px; font-weight: 500; text-align: right; }
+.detail-val.mono { font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--text-muted); }
+.panel-remarks { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.panel-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; flex-shrink: 0;
+}
+.panel-footer .btn { flex: 1; justify-content: center; }
+
+/* Row clickable */
+tbody tr { cursor: pointer; }
+tbody tr.row-selected td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 
 /* ── Stats ── */
 .stats-row {
