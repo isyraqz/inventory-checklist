@@ -337,10 +337,6 @@ export default function Dashboard() {
             </div>
           )}
           <div className="stat-card">
-            <div className="stat-label">In use</div>
-            <div className="stat-value">{inuse}</div>
-          </div>
-          <div className="stat-card">
             <div className="stat-label">Available</div>
             <div className="stat-value">{avail}</div>
           </div>
