@@ -600,50 +600,6 @@ export default function Dashboard() {
                   <p className="panel-remarks">{selectedItem.remarks || '—'}</p>
                 </div>
 
-                {/* Maintenance log */}
-                <div className="panel-section">
-                  <div className="panel-section-title">Maintenance Log</div>
-                  {logsLoading ? (
-                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
-                  ) : logs.length === 0 ? (
-                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                      {logs.map((log, i) => (
-                        <div key={log.id} style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative' }}>
-                          {i < logs.length - 1 && (
-                            <div style={{ position: 'absolute', left: 5, top: 14, bottom: 0, width: 1, background: 'var(--border)' }} />
-                          )}
-                          <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 3, zIndex: 1 }} />
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
-                            <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
-                              {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                              {' · '}{log.logged_by}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {role === 'admin' && (
-                    <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                      <input
-                        type="text"
-                        value={logInput}
-                        onChange={e => setLogInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && addLog()}
-                        placeholder="Add a log entry…"
-                        style={{ flex: 1, fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
-                      />
-                      <button onClick={addLog} disabled={logSaving || !logInput.trim()}
-                        className="btn btn-primary" style={{ height: 34, padding: '0 12px', fontSize: 12 }}>
-                        {logSaving ? '…' : 'Add'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
                 {/* User History */}
                 <div className="panel-section">
                   <div className="panel-section-title">User History</div>
@@ -673,26 +629,55 @@ export default function Dashboard() {
                         style={{ fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
                       />
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <input
-                          type="text"
-                          value={uhForm.date_from}
-                          onChange={e => setUhForm(f => ({ ...f, date_from: e.target.value }))}
-                          placeholder="From DD-MM-YYYY"
-                          maxLength={10}
-                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
-                        />
-                        <input
-                          type="text"
-                          value={uhForm.date_to}
-                          onChange={e => setUhForm(f => ({ ...f, date_to: e.target.value }))}
-                          placeholder="To (optional)"
-                          maxLength={10}
-                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }}
-                        />
+                        <input type="text" value={uhForm.date_from} onChange={e => setUhForm(f => ({ ...f, date_from: e.target.value }))}
+                          placeholder="From DD-MM-YYYY" maxLength={10}
+                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                        <input type="text" value={uhForm.date_to} onChange={e => setUhForm(f => ({ ...f, date_to: e.target.value }))}
+                          placeholder="To (optional)" maxLength={10}
+                          style={{ flex: 1, fontSize: 11, padding: '7px 8px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
                       </div>
                       <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()}
                         className="btn btn-primary" style={{ height: 32, fontSize: 12, justifyContent: 'center' }}>
                         {uhSaving ? 'Saving…' : 'Add entry'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Maintenance log */}
+                <div className="panel-section">
+                  <div className="panel-section-title">Maintenance Log</div>
+                  {logsLoading ? (
+                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
+                  ) : logs.length === 0 ? (
+                    <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                      {logs.map((log, i) => (
+                        <div key={log.id} style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative' }}>
+                          {i < logs.length - 1 && (
+                            <div style={{ position: 'absolute', left: 5, top: 14, bottom: 0, width: 1, background: 'var(--border)' }} />
+                          )}
+                          <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 3, zIndex: 1 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
+                            <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
+                              {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {' · '}{log.logged_by}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {role === 'admin' && (
+                    <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                      <input type="text" value={logInput} onChange={e => setLogInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addLog()} placeholder="Add a log entry…"
+                        style={{ flex: 1, fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                      <button onClick={addLog} disabled={logSaving || !logInput.trim()}
+                        className="btn btn-primary" style={{ height: 34, padding: '0 12px', fontSize: 12 }}>
+                        {logSaving ? '…' : 'Add'}
                       </button>
                     </div>
                   )}
