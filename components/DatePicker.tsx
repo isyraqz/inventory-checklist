@@ -27,6 +27,7 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
   const [viewYear, setViewYear]   = useState(new Date().getFullYear())
   const [viewMonth, setViewMonth] = useState(new Date().getMonth())
   const [yearBase, setYearBase]   = useState(Math.floor(new Date().getFullYear() / 12) * 12)
+  const [flipLeft, setFlipLeft]   = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const parsed = parseDate(value)
@@ -37,6 +38,10 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
     setViewMonth(base.getMonth())
     setYearBase(Math.floor(base.getFullYear() / 12) * 12)
     setYearPicker(false)
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      setFlipLeft(rect.left + 240 > window.innerWidth)
+    }
     setOpen(true)
   }
 
@@ -122,7 +127,7 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 6px)',
-          left: 0,
+          ...(flipLeft ? { right: 0 } : { left: 0 }),
           zIndex: 200,
           background: 'var(--surface)',
           border: '1px solid var(--border)',
