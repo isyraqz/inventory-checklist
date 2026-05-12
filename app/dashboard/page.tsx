@@ -132,6 +132,8 @@ export default function Dashboard() {
   const [importError, setImportError] = useState('')
   const [importing, setImporting] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState('')
   const [photos, setPhotos] = useState<ItemPhoto[]>([])
   const [photosLoading, setPhotosLoading] = useState(false)
   const [photoUploading, setPhotoUploading] = useState(false)
@@ -195,9 +197,9 @@ export default function Dashboard() {
     if (selectedItem) {
       setLogInput(''); setUhForm({ user_name: '', date_from: '', date_to: '' })
       loadLogs(selectedItem.id); loadUserHistory(selectedItem.id); loadPhotos(selectedItem.id)
-      setPanelEditMode(false)
+      setPanelEditMode(false); setEditingField(null)
     } else {
-      setLogs([]); setUserHistory([]); setPhotos([])
+      setLogs([]); setUserHistory([]); setPhotos([]); setEditingField(null)
     }
   }, [selectedItem, loadLogs, loadUserHistory, loadPhotos])
 
@@ -378,6 +380,25 @@ export default function Dashboard() {
     await supabase.from('item_photos').delete().eq('id', photo.id)
     setPhotos(prev => prev.filter(p => p.id !== photo.id))
     toast('Photo deleted')
+  }
+
+  const DATE_FIELDS = new Set(['date_acquired', 'purchased_date', 'warranty_exp', 'last_checked'])
+
+  async function saveField(field: string, raw: string) {
+    if (!selectedItem) return
+    const value = DATE_FIELDS.has(field) ? (toDBDate(raw) || null) : raw
+    await supabase.from('items').update({ [field]: value, updated_at: new Date().toISOString() }).eq('id', selectedItem.id)
+    const updated = { ...selectedItem, [field]: value }
+    setSelectedItem(updated)
+    setItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, [field]: value } : i))
+    setEditingField(null)
+    toast('Saved')
+  }
+
+  function startEdit(field: string, current: string | null) {
+    if (role !== 'admin') return
+    setEditingField(field)
+    setEditingValue(DATE_FIELDS.has(field) ? toFormDate(current) : (current ?? ''))
   }
 
   function startPanelEdit() {
@@ -742,8 +763,30 @@ export default function Dashboard() {
             <>
               <div className="panel-header">
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="panel-title">{panelEditMode ? panelForm.name || selectedItem.name : selectedItem.name}</div>
-                  <div className="panel-sub">{panelEditMode ? panelForm.brand || 'No brand' : (selectedItem.brand || 'No brand')}</div>
+                  {editingField === 'name' && !panelEditMode
+                    ? <input autoFocus type="text" value={editingValue}
+                        onChange={e => setEditingValue(e.target.value)}
+                        onBlur={() => saveField('name', editingValue)}
+                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                        className="panel-title"
+                        style={{ border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', width: '100%', padding: '1px 2px', fontFamily: 'var(--font)' }} />
+                    : <div className="panel-title"
+                        onClick={() => !panelEditMode && startEdit('name', selectedItem.name)}
+                        style={role === 'admin' && !panelEditMode ? { cursor: 'text' } : {}}>
+                        {panelEditMode ? panelForm.name || selectedItem.name : selectedItem.name}
+                      </div>}
+                  {editingField === 'brand' && !panelEditMode
+                    ? <input autoFocus type="text" value={editingValue}
+                        onChange={e => setEditingValue(e.target.value)}
+                        onBlur={() => saveField('brand', editingValue)}
+                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                        className="panel-sub"
+                        style={{ border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', width: '100%', padding: '1px 2px', fontFamily: 'var(--font)', marginTop: 3 }} />
+                    : <div className="panel-sub"
+                        onClick={() => !panelEditMode && startEdit('brand', selectedItem.brand)}
+                        style={role === 'admin' && !panelEditMode ? { cursor: 'text', marginTop: 3 } : { marginTop: 3 }}>
+                        {panelEditMode ? panelForm.brand || 'No brand' : (selectedItem.brand || 'No brand')}
+                      </div>}
                 </div>
                 <button className="panel-close" onClick={() => { setSelectedItem(null); setPanelEditMode(false) }}>✕</button>
               </div>
@@ -790,46 +833,120 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                /* ── Read view ── */
+                /* ── Read / inline-edit view ── */
                 <div className="panel-body">
-                  <div className="panel-section">
-                    <div className="panel-section-title">Status &amp; Condition</div>
-                    <div className="detail-row">
-                      <span className="detail-key">Status</span>
-                      <span className="detail-val"><span className={`badge ${STATUS_CLASS[selectedItem.status] ?? ''}`}>{selectedItem.status}</span></span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-key">Condition</span>
-                      <span className="detail-val"><span className={`badge ${COND_CLASS[selectedItem.condition] ?? ''}`}>{selectedItem.condition}</span></span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-key">Assigned to</span>
-                      <span className="detail-val">{selectedItem.assigned_to || '—'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-key">Issue date</span>
-                      <span className="detail-val mono">{fmtDate(selectedItem.date_acquired)}</span>
-                    </div>
-                  </div>
 
-                  <div className="panel-section">
-                    <div className="panel-section-title">Classification</div>
-                    <div className="detail-row"><span className="detail-key">Category</span><span className="detail-val">{selectedItem.category}</span></div>
-                    <div className="detail-row"><span className="detail-key">Department</span><span className="detail-val">{selectedItem.department || '—'}</span></div>
-                    <div className="detail-row"><span className="detail-key">Serial No.</span><span className="detail-val mono">{selectedItem.serial || '—'}</span></div>
-                  </div>
+                  {/* Helper: inline text field */}
+                  {(() => {
+                    const F = role === 'admin'
 
-                  <div className="panel-section">
-                    <div className="panel-section-title">Dates</div>
-                    <div className="detail-row"><span className="detail-key">Purchased date</span><span className="detail-val mono">{fmtDate(selectedItem.purchased_date)}</span></div>
-                    <div className="detail-row"><span className="detail-key">Warranty exp.</span><span className="detail-val mono">{fmtDate(selectedItem.warranty_exp)}</span></div>
-                    <div className="detail-row"><span className="detail-key">Last checked</span><span className="detail-val mono">{fmtDate(selectedItem.last_checked)}</span></div>
-                  </div>
+                    function FieldText({ field, value, mono }: { field: string; value: string | null; mono?: boolean }) {
+                      if (editingField === field) return (
+                        <input autoFocus type="text" value={editingValue}
+                          onChange={e => setEditingValue(e.target.value)}
+                          onBlur={() => saveField(field, editingValue)}
+                          onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                          style={{ fontSize: 12, fontFamily: mono ? 'var(--mono)' : 'var(--font)', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px' }} />
+                      )
+                      return <span className={`detail-val${mono ? ' mono' : ''}`} onClick={() => F && startEdit(field, value)}
+                        style={F ? { cursor: 'text', borderBottom: '1px dashed transparent' } : {}}
+                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border-strong)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}>
+                        {value || '—'}
+                      </span>
+                    }
 
-                  <div className="panel-section">
-                    <div className="panel-section-title">Remarks</div>
-                    <p className="panel-remarks">{selectedItem.remarks || '—'}</p>
-                  </div>
+                    function FieldSelect({ field, value, options }: { field: string; value: string; options: string[] }) {
+                      if (editingField === field) return (
+                        <select autoFocus value={editingValue}
+                          onChange={e => { setEditingValue(e.target.value); saveField(field, e.target.value) }}
+                          onBlur={() => setEditingField(null)}
+                          style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font)' }}>
+                          {options.map(o => <option key={o}>{o}</option>)}
+                        </select>
+                      )
+                      return <span className="detail-val" onClick={() => F && startEdit(field, value)}
+                        style={F ? { cursor: 'pointer', borderBottom: '1px dashed transparent' } : {}}
+                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border-strong)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}>
+                        {field === 'status'
+                          ? <span className={`badge ${STATUS_CLASS[value] ?? ''}`}>{value}</span>
+                          : field === 'condition'
+                          ? <span className={`badge ${COND_CLASS[value] ?? ''}`}>{value}</span>
+                          : value || '—'}
+                      </span>
+                    }
+
+                    function FieldDate({ field, value }: { field: string; value: string | null }) {
+                      if (editingField === field) return (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField(field, v) }}
+                            placeholder="DD-MM-YYYY" />
+                        </div>
+                      )
+                      return <span className="detail-val mono" onClick={() => F && startEdit(field, value)}
+                        style={F ? { cursor: 'text', borderBottom: '1px dashed transparent' } : {}}
+                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border-strong)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}>
+                        {fmtDate(value)}
+                      </span>
+                    }
+
+                    function FieldTextarea({ field, value }: { field: string; value: string | null }) {
+                      if (editingField === field) return (
+                        <textarea autoFocus value={editingValue} rows={3}
+                          onChange={e => setEditingValue(e.target.value)}
+                          onBlur={() => saveField(field, editingValue)}
+                          onKeyDown={e => { if (e.key === 'Escape') setEditingField(null) }}
+                          style={{ width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--accent)', outline: 'none', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', resize: 'vertical', marginTop: 4 }} />
+                      )
+                      return <p className="panel-remarks" onClick={() => F && startEdit(field, value)}
+                        style={F ? { cursor: 'text', borderRadius: 6, padding: '4px 6px', border: '1px dashed transparent', marginLeft: -6 } : {}}
+                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'transparent' }}>
+                        {value || '—'}
+                      </p>
+                    }
+
+                    return <>
+                      <div className="panel-section">
+                        <div className="panel-section-title">Status &amp; Condition</div>
+                        <div className="detail-row"><span className="detail-key">Status</span>
+                          <FieldSelect field="status" value={selectedItem.status} options={['Available', 'In use', 'Maintenance']} /></div>
+                        <div className="detail-row"><span className="detail-key">Condition</span>
+                          <FieldSelect field="condition" value={selectedItem.condition} options={['Good', 'Fair', 'Poor']} /></div>
+                        <div className="detail-row"><span className="detail-key">Assigned to</span>
+                          <FieldText field="assigned_to" value={selectedItem.assigned_to} /></div>
+                        <div className="detail-row"><span className="detail-key">Issue date</span>
+                          <FieldDate field="date_acquired" value={selectedItem.date_acquired} /></div>
+                      </div>
+
+                      <div className="panel-section">
+                        <div className="panel-section-title">Classification</div>
+                        <div className="detail-row"><span className="detail-key">Category</span>
+                          <FieldSelect field="category" value={selectedItem.category} options={['IT', 'Furniture', 'Equipment', 'Other']} /></div>
+                        <div className="detail-row"><span className="detail-key">Department</span>
+                          <FieldText field="department" value={selectedItem.department} /></div>
+                        <div className="detail-row"><span className="detail-key">Serial No.</span>
+                          <FieldText field="serial" value={selectedItem.serial} mono /></div>
+                      </div>
+
+                      <div className="panel-section">
+                        <div className="panel-section-title">Dates</div>
+                        <div className="detail-row"><span className="detail-key">Purchased date</span>
+                          <FieldDate field="purchased_date" value={selectedItem.purchased_date} /></div>
+                        <div className="detail-row"><span className="detail-key">Warranty exp.</span>
+                          <FieldDate field="warranty_exp" value={selectedItem.warranty_exp} /></div>
+                        <div className="detail-row"><span className="detail-key">Last checked</span>
+                          <FieldDate field="last_checked" value={selectedItem.last_checked} /></div>
+                      </div>
+
+                      <div className="panel-section">
+                        <div className="panel-section-title">Remarks</div>
+                        <FieldTextarea field="remarks" value={selectedItem.remarks} />
+                      </div>
+                    </>
+                  })()}
 
                   {/* Photos */}
                   <div className="panel-section">
