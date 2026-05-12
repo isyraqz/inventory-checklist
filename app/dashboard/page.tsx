@@ -693,28 +693,6 @@ export default function Dashboard() {
             </table>
           </div>
 
-          {/* Mobile card list */}
-          <div className="mobile-list">
-            {filtered.map((item, idx) => (
-              <div key={item.id}
-                className={`mobile-card${selectedItem?.id === item.id ? ' selected' : ''}`}
-                onClick={() => setSelectedItem(prev => prev?.id === item.id ? null : item)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontWeight: 500, fontSize: 14 }}>{item.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{item.brand || '—'}</div>
-                  </div>
-                  <span className={`badge ${STATUS_CLASS[item.status] ?? ''}`}>{item.status}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 10, marginTop: 8, fontSize: 11, color: 'var(--text-hint)' }}>
-                  <span>#{String(idx + 1).padStart(3, '0')}</span>
-                  {item.assigned_to && <span style={{ color: 'var(--text-muted)' }}>{item.assigned_to}</span>}
-                  {item.date_acquired && <span style={{ fontFamily: 'var(--mono)' }}>{fmtDate(item.date_acquired)}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-
           {/* Keyboard shortcut hint */}
           {!selectMode && (
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 2px 0', fontSize: 11, color: 'var(--text-hint)' }}>
@@ -727,11 +705,6 @@ export default function Dashboard() {
             </div>
           )}
         </main>
-
-        {/* Mobile backdrop */}
-        {selectedItem && (
-          <div onClick={() => setSelectedItem(null)} className="panel-backdrop" />
-        )}
 
         {/* Detail Panel */}
         <aside className={`detail-panel${selectedItem ? ' open' : ''}`}>
