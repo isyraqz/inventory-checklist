@@ -124,8 +124,6 @@ export default function Dashboard() {
   const [uhSaving, setUhSaving] = useState(false)
 
   // ── New UX state ──
-  const [selectMode, setSelectMode] = useState(false)
-  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
   const [panelEditMode, setPanelEditMode] = useState(false)
   const [panelForm, setPanelForm] = useState<Partial<ItemFormData>>({})
   const [panelSaving, setPanelSaving] = useState(false)
@@ -378,24 +376,27 @@ export default function Dashboard() {
     setPanelSaving(false)
   }
 
-  // ── Bulk actions ──
-  function toggleBulkSelect(id: string) {
-    setBulkSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
-  }
+  // ── Bulk actions (operate on auditChecked) ──
   function toggleSelectAll() {
-    setBulkSelected(bulkSelected.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map(i => i.id)))
+    if (auditChecked.size === filtered.length && filtered.length > 0) {
+      clearAudit()
+    } else {
+      filtered.forEach(item => { if (!auditChecked.has(item.id)) toggleItem(item.id) })
+    }
   }
   async function bulkDelete() {
-    const count = bulkSelected.size
+    const ids = Array.from(auditChecked)
+    const count = ids.length
     if (!confirm(`Delete ${count} item${count !== 1 ? 's' : ''}? This cannot be undone.`)) return
-    await supabase.from('items').delete().in('id', Array.from(bulkSelected))
-    if (selectedItem && bulkSelected.has(selectedItem.id)) setSelectedItem(null)
-    await loadItems(); setBulkSelected(new Set()); toast(`${count} item${count !== 1 ? 's' : ''} deleted`)
+    await supabase.from('items').delete().in('id', ids)
+    if (selectedItem && auditChecked.has(selectedItem.id)) setSelectedItem(null)
+    await loadItems(); clearAudit(); toast(`${count} item${count !== 1 ? 's' : ''} deleted`)
   }
   async function bulkSetStatus(status: ItemStatus) {
-    const count = bulkSelected.size
-    await supabase.from('items').update({ status, updated_at: new Date().toISOString() }).in('id', Array.from(bulkSelected))
-    await loadItems(); setBulkSelected(new Set()); toast(`${count} item${count !== 1 ? 's' : ''} set to ${status}`)
+    const ids = Array.from(auditChecked)
+    const count = ids.length
+    await supabase.from('items').update({ status, updated_at: new Date().toISOString() }).in('id', ids)
+    await loadItems(); clearAudit(); toast(`${count} item${count !== 1 ? 's' : ''} set to ${status}`)
   }
 
   // ── CSV import ──
@@ -581,20 +582,21 @@ export default function Dashboard() {
                   Import
                 </button>
                 <input ref={importInputRef} type="file" accept=".csv,.txt" onChange={handleCSVFile} style={{ display: 'none' }} />
-                <button className="btn" onClick={() => { setSelectMode(s => !s); setBulkSelected(new Set()) }}
-                  style={selectMode ? { background: '#1e3a5f', color: '#fff', borderColor: '#1e3a5f' } : {}}>
-                  {selectMode ? 'Exit select' : 'Select'}
-                </button>
               </>
             )}
           </div>
 
           {showCharts && <ChartPanel items={items} />}
 
-          {/* Bulk action bar */}
-          {selectMode && bulkSelected.size > 0 && (
+          {/* Bulk action bar — appears automatically when 2+ items are checked */}
+          {auditChecked.size > 1 && (
             <div className="bulk-bar">
-              <span style={{ fontWeight: 500 }}>{bulkSelected.size} item{bulkSelected.size !== 1 ? 's' : ''} selected</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input type="checkbox"
+                  checked={auditChecked.size === filtered.length && filtered.length > 0}
+                  onChange={toggleSelectAll} />
+                <span style={{ fontWeight: 500 }}>{auditChecked.size} item{auditChecked.size !== 1 ? 's' : ''} selected</span>
+              </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <select defaultValue="" onChange={e => { if (e.target.value) { bulkSetStatus(e.target.value as ItemStatus); e.currentTarget.value = '' } }}
                   style={{ height: 32, fontSize: 12 }}>
@@ -603,7 +605,7 @@ export default function Dashboard() {
                 </select>
                 <button className="btn" onClick={bulkDelete}
                   style={{ height: 32, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 12px', fontSize: 12 }}>
-                  Delete {bulkSelected.size}
+                  Delete {auditChecked.size}
                 </button>
               </div>
             </div>
@@ -611,7 +613,7 @@ export default function Dashboard() {
 
           {/* Audit bar + Add button */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
-            {role === 'admin' && checkedCount > 0 && !selectMode && (
+            {role === 'admin' && checkedCount > 0 && auditChecked.size < 2 && (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--accent)', borderRadius: 'var(--radius)', padding: '10px 16px', fontSize: 13 }}>
                 <span style={{ color: 'var(--accent-fg)', fontWeight: 500 }}>✓ {checkedCount} item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
                 <button onClick={clearAudit} style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.15)', color: 'var(--accent-fg)', cursor: 'pointer' }}>
@@ -636,11 +638,7 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   {role === 'admin' && (
-                    <th style={{ width: 36, cursor: 'default' }}>
-                      {selectMode
-                        ? <input type="checkbox" checked={bulkSelected.size === filtered.length && filtered.length > 0} onChange={toggleSelectAll} />
-                        : null}
-                    </th>
+                    <th style={{ width: 36, cursor: 'default' }} />
                   )}
                   <th style={{ width: 48, cursor: 'default', color: 'var(--text-hint)' }}>No</th>
                   {COL_LABELS.map(({ key, label }) => {
@@ -667,20 +665,14 @@ export default function Dashboard() {
                   </td></tr>
                 ) : filtered.map((item, idx) => (
                   <tr key={item.id}
-                    onClick={() => {
-                      if (selectMode) { toggleBulkSelect(item.id) }
-                      else { setSelectedItem(prev => prev?.id === item.id ? null : item); setFocusedIdx(idx) }
-                    }}
+                    onClick={() => { setSelectedItem(prev => prev?.id === item.id ? null : item); setFocusedIdx(idx) }}
                     className={[
-                      !selectMode && role === 'admin' && auditChecked.has(item.id) ? 'row-checked' : '',
-                      !selectMode && selectedItem?.id === item.id ? 'row-selected' : '',
-                      selectMode && bulkSelected.has(item.id) ? 'row-selected' : '',
+                      role === 'admin' && auditChecked.has(item.id) ? 'row-checked' : '',
+                      selectedItem?.id === item.id ? 'row-selected' : '',
                     ].filter(Boolean).join(' ')}>
                     {role === 'admin' && (
                       <td className="no-strike" onClick={e => e.stopPropagation()}>
-                        {selectMode
-                          ? <input type="checkbox" checked={bulkSelected.has(item.id)} onChange={() => toggleBulkSelect(item.id)} />
-                          : <input type="checkbox" checked={auditChecked.has(item.id)} onChange={() => toggleItem(item.id)} />}
+                        <input type="checkbox" checked={auditChecked.has(item.id)} onChange={() => toggleItem(item.id)} />
                       </td>
                     )}
                     <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-hint)' }}>{String(idx + 1).padStart(3, '0')}</td>
@@ -700,16 +692,14 @@ export default function Dashboard() {
           </div>
 
           {/* Keyboard shortcut hint */}
-          {!selectMode && (
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 2px 0', fontSize: 11, color: 'var(--text-hint)' }}>
-              {[['↑↓', 'Navigate'], ['E', 'Edit'], ['Esc', 'Close']].map(([k, l]) => (
-                <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 5px', fontFamily: 'var(--mono)', fontSize: 10 }}>{k}</span>
-                  {l}
-                </span>
-              ))}
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 2px 0', fontSize: 11, color: 'var(--text-hint)' }}>
+            {[['↑↓', 'Navigate'], ['E', 'Edit'], ['Esc', 'Close']].map(([k, l]) => (
+              <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 5px', fontFamily: 'var(--mono)', fontSize: 10 }}>{k}</span>
+                {l}
+              </span>
+            ))}
+          </div>
         </main>
 
         {/* Detail Panel */}
