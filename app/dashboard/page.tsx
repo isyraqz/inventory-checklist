@@ -310,22 +310,85 @@ export default function Dashboard() {
     setNameError(false); setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
+
+    // Auto-defaults: assigned_to → "Office", date_acquired → today
+    const assignedTo = form.assigned_to.trim() || 'Office'
+    const assignedDateDB = toDBDate(form.date_acquired) || new Date().toISOString().slice(0, 10)
+
     const payload = {
       name: form.name, brand: form.brand, serial: form.serial, status: form.status,
-      condition: form.condition, assigned_to: form.assigned_to, category: form.category,
-      department: form.department, date_acquired: toDBDate(form.date_acquired) || null,
+      condition: form.condition, assigned_to: assignedTo, category: form.category,
+      department: form.department, date_acquired: assignedDateDB,
       purchased_date: toDBDate(form.purchased_date) || null,
       warranty_exp: toDBDate(form.warranty_exp) || null,
       last_checked: toDBDate(form.last_checked) || null, remarks: form.remarks,
     }
+
     if (editId) {
+      const original = items.find(i => i.id === editId)
       const { error } = await supabase.from('items').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editId)
-      if (!error) { toast('Item updated'); await loadItems(); setSelectedItem(prev => prev?.id === editId ? { ...prev, ...payload } as Item : prev) }
+      if (!error) {
+        const wasBlank = !original?.assigned_to
+        const assignedToChanged = original?.assigned_to !== assignedTo
+        const dateChanged = original?.date_acquired !== assignedDateDB
+
+        if (wasBlank && assignedTo) {
+          // Re-assigning after End Usage — create a new open UH entry
+          await supabase.from('item_user_history').insert({
+            item_id: editId, user_name: assignedTo, date_from: assignedDateDB, date_to: null,
+          })
+        } else if (!wasBlank && (assignedToChanged || dateChanged)) {
+          // Name correction or date correction — update the open UH entry
+          const { data: openEntry } = await supabase.from('item_user_history')
+            .select('id').eq('item_id', editId).is('date_to', null)
+            .order('date_from', { ascending: false }).limit(1)
+          if (openEntry && openEntry.length > 0) {
+            const updates: Record<string, string> = {}
+            if (assignedToChanged) updates.user_name = assignedTo
+            if (dateChanged) updates.date_from = assignedDateDB
+            await supabase.from('item_user_history').update(updates).eq('id', openEntry[0].id)
+          }
+        }
+
+        toast('Item updated')
+        await loadItems()
+        setSelectedItem(prev => prev?.id === editId ? { ...prev, ...payload } as Item : prev)
+        if (selectedItem?.id === editId) await loadUserHistory(editId)
+      }
     } else {
-      const { error } = await supabase.from('items').insert({ ...payload, user_id: user.id })
-      if (!error) { toast('Item added'); await loadItems() }
+      // New item — insert and auto-create first UH entry
+      const { data: inserted, error } = await supabase
+        .from('items').insert({ ...payload, user_id: user.id }).select().single()
+      if (!error && inserted) {
+        await supabase.from('item_user_history').insert({
+          item_id: inserted.id, user_name: assignedTo, date_from: assignedDateDB, date_to: null,
+        })
+        toast('Item added')
+        await loadItems()
+      }
     }
     setSaving(false); setModalOpen(false)
+  }
+
+  async function endUsage() {
+    if (!editId) return
+    const todayDB = new Date().toISOString().slice(0, 10)
+    // Close the open UH entry
+    const { data: openEntry } = await supabase.from('item_user_history')
+      .select('id').eq('item_id', editId).is('date_to', null)
+      .order('date_from', { ascending: false }).limit(1)
+    if (openEntry && openEntry.length > 0) {
+      await supabase.from('item_user_history').update({ date_to: todayDB }).eq('id', openEntry[0].id)
+    }
+    // Clear assigned_to and date_acquired on item
+    await supabase.from('items').update({ assigned_to: null, date_acquired: null, updated_at: new Date().toISOString() }).eq('id', editId)
+    setForm(f => ({ ...f, assigned_to: '', date_acquired: '' }))
+    await loadItems()
+    if (selectedItem?.id === editId) {
+      setSelectedItem(prev => prev ? { ...prev, assigned_to: '', date_acquired: null } as Item : prev)
+      await loadUserHistory(editId)
+    }
+    toast('Usage ended')
   }
 
   // ── Audit ──
@@ -1102,7 +1165,8 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
-                            <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined} maxDate={todayDMY()}
+                            <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined}
+                              maxDate={userHistory.find(h => !h.date_to) ? toFormDate(userHistory.find(h => !h.date_to)!.date_from) : todayDMY()}
                               onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                           </div>
                         </div>
@@ -1119,53 +1183,67 @@ export default function Dashboard() {
 
                     {uhLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
                       : userHistory.length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet.</p>
-                      : userHistory.map(h => (
-                        <div key={h.id}>
-                          {editingUh === h.id ? (
-                            /* Edit form */
-                            <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                              <input type="text" value={uhEditForm.user_name} placeholder="User name"
-                                onChange={e => setUhEditForm(f => ({ ...f, user_name: e.target.value }))}
-                                style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <div>
-                                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
-                                  <DatePicker value={uhEditForm.date_from} maxDate={todayDMY()}
-                                    onChange={v => setUhEditForm(f => {
-                                      const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
-                                      return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
-                                    })} placeholder="DD-MM-YYYY" />
+                      : userHistory.map((h, idx) => {
+                        const isOpen = !h.date_to
+                        // maxDate for this entry's date_to = date_from of the next newer entry (idx-1)
+                        const newerEntry = idx > 0 ? userHistory[idx - 1] : null
+                        const overlapMax = newerEntry ? toFormDate(newerEntry.date_from) : todayDMY()
+                        return (
+                          <div key={h.id}>
+                            {editingUh === h.id && !isOpen ? (
+                              /* Edit form — past entries only */
+                              <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <input type="text" value={uhEditForm.user_name} placeholder="User name"
+                                  onChange={e => setUhEditForm(f => ({ ...f, user_name: e.target.value }))}
+                                  style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                  <div>
+                                    <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
+                                    <DatePicker value={uhEditForm.date_from} maxDate={todayDMY()}
+                                      onChange={v => setUhEditForm(f => {
+                                        const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
+                                        return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
+                                      })} placeholder="DD-MM-YYYY" />
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
+                                    <DatePicker value={uhEditForm.date_to} minDate={uhEditForm.date_from || undefined} maxDate={overlapMax}
+                                      onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                                  </div>
                                 </div>
-                                <div>
-                                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To (optional)</div>
-                                  <DatePicker value={uhEditForm.date_to} minDate={uhEditForm.date_from || undefined} maxDate={todayDMY()}
-                                    onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button onClick={() => deleteUhEntry(h.id)}
+                                    className="btn" style={{ height: 32, fontSize: 12, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 10px' }}>Delete</button>
+                                  <button onClick={() => setEditingUh(null)}
+                                    className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                                  <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
+                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <button onClick={() => deleteUhEntry(h.id)}
-                                  className="btn" style={{ height: 32, fontSize: 12, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 10px' }}>Delete</button>
-                                <button onClick={() => setEditingUh(null)}
-                                  className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
-                                <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
-                                  className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                            ) : (
+                              /* Display row */
+                              <div className="detail-row"
+                                onClick={() => {
+                                  if (!isOpen && role === 'admin') {
+                                    setEditingUh(h.id); setUhAddOpen(false)
+                                    setUhEditForm({ user_name: h.user_name, date_from: toFormDate(h.date_from), date_to: toFormDate(h.date_to) })
+                                  }
+                                }}
+                                onMouseEnter={e => { if (!isOpen && role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
+                                style={{ alignItems: 'center', cursor: (!isOpen && role === 'admin') ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px' }}>
+                                <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>
+                                  {h.user_name}
+                                  {isOpen && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#276b3a', background: '#e6f4ea', padding: '1px 5px', borderRadius: 99 }}>current</span>}
+                                </span>
+                                <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
+                                  {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
+                                </span>
                               </div>
-                            </div>
-                          ) : (
-                            /* Display row */
-                            <div className="detail-row"
-                              onClick={() => { if (role === 'admin') { setEditingUh(h.id); setUhAddOpen(false); setUhEditForm({ user_name: h.user_name, date_from: toFormDate(h.date_from), date_to: toFormDate(h.date_to) }) } }}
-                              onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
-                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                              style={{ alignItems: 'center', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px' }}>
-                              <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>{h.user_name}</span>
-                              <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
-                                {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                          </div>
+                        )
+                      })}
                   </div>
 
                   <div className="panel-section">
@@ -1289,14 +1367,21 @@ export default function Dashboard() {
                 <select value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}>
                   <option>Good</option><option>Fair</option><option>Poor</option></select></div>
               <div className="form-field"><label>Assigned to</label>
-                <input type="text" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} placeholder="e.g. John Doe" /></div>
+                <input type="text" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} placeholder="e.g. John Doe (defaults to Office)" /></div>
               <div className="form-field"><label>Category</label>
                 <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value as Category }))}>
                   <option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option></select></div>
               <div className="form-field"><label>Department</label>
                 <input type="text" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="e.g. IT, HR, Finance" /></div>
               <div className="form-field"><label>Assigned date</label>
-                <DatePicker value={form.date_acquired} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} /></div>
+                <DatePicker value={form.date_acquired} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} />
+                {editId && (form.assigned_to || userHistory.some(h => !h.date_to)) && (
+                  <button type="button" onClick={endUsage}
+                    style={{ marginTop: 6, fontFamily: 'var(--font)', fontSize: 11, fontWeight: 500, padding: '5px 10px', borderRadius: 'var(--radius)', border: '1px solid rgba(185,28,28,0.35)', background: '#fce8e8', color: '#b91c1c', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                    End Usage
+                  </button>
+                )}
+              </div>
               <div className="form-field"><label>Purchased date</label>
                 <DatePicker value={form.purchased_date} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, purchased_date: v }))} /></div>
               <div className="form-field"><label>Warranty expiry</label>
@@ -1312,35 +1397,26 @@ export default function Dashboard() {
                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', marginBottom: 10 }}>User History</div>
-                  {userHistory.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
-                      {userHistory.map(h => (
-                        <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', borderBottom: '1px solid var(--border)' }}>
-                          <span style={{ fontWeight: 500 }}>{h.user_name}</span>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-hint)' }}>
-                            {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <input type="text" value={uhForm.user_name} onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))} placeholder="User name"
-                      style={{ fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>From</div>
-                        <DatePicker value={uhForm.date_from} maxDate={todayDMY()}
-                          onChange={v => setUhForm(f => {
-                            const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
-                            return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
-                          })} /></div>
-                      <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>To (optional)</div>
-                        <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined} maxDate={todayDMY()}
-                          onChange={v => setUhForm(f => ({ ...f, date_to: v }))} /></div>
-                    </div>
-                    <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()} className="btn btn-primary" style={{ justifyContent: 'center' }}>
-                      {uhSaving ? 'Saving…' : 'Add user entry'}</button>
-                  </div>
+                  {userHistory.length === 0
+                    ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet — will be created on save.</p>
+                    : <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {userHistory.map(h => {
+                          const isOpen = !h.date_to
+                          return (
+                            <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, padding: '5px 0', borderBottom: '1px solid var(--border)' }}>
+                              <span style={{ fontWeight: 500 }}>
+                                {h.user_name}
+                                {isOpen && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: '#276b3a', background: '#e6f4ea', padding: '1px 5px', borderRadius: 99 }}>current</span>}
+                              </span>
+                              <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-hint)' }}>
+                                {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                  }
+                  <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 8 }}>Manage via Assigned To / Assigned Date above, or the detail panel.</p>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', marginBottom: 10 }}>Maintenance Log</div>
