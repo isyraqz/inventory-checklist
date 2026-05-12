@@ -934,7 +934,7 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('date_acquired', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('date_acquired', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)} style={role === 'admin' ? { cursor: 'text' } : {}}>
                             {fmtDate(selectedItem.date_acquired)}
@@ -989,7 +989,7 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Purchased date</span>
                       {editingField === 'purchased_date'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('purchased_date', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('purchased_date', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('purchased_date', selectedItem.purchased_date)} style={role === 'admin' ? { cursor: 'text' } : {}}>
                             {fmtDate(selectedItem.purchased_date)}
@@ -1011,7 +1011,7 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Last checked</span>
                       {editingField === 'last_checked'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('last_checked', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('last_checked', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('last_checked', selectedItem.last_checked)} style={role === 'admin' ? { cursor: 'text' } : {}}>
                             {fmtDate(selectedItem.last_checked)}
@@ -1296,13 +1296,13 @@ export default function Dashboard() {
               <div className="form-field"><label>Department</label>
                 <input type="text" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="e.g. IT, HR, Finance" /></div>
               <div className="form-field"><label>Assigned date</label>
-                <DatePicker value={form.date_acquired} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} /></div>
+                <DatePicker value={form.date_acquired} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} /></div>
               <div className="form-field"><label>Purchased date</label>
-                <DatePicker value={form.purchased_date} onChange={v => setForm(f => ({ ...f, purchased_date: v }))} /></div>
+                <DatePicker value={form.purchased_date} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, purchased_date: v }))} /></div>
               <div className="form-field"><label>Warranty expiry</label>
                 <DatePicker value={form.warranty_exp} onChange={v => setForm(f => ({ ...f, warranty_exp: v }))} /></div>
               <div className="form-field"><label>Last checked</label>
-                <DatePicker value={form.last_checked} onChange={v => setForm(f => ({ ...f, last_checked: v }))} /></div>
+                <DatePicker value={form.last_checked} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, last_checked: v }))} /></div>
               <div className="form-field full"><label>Remarks</label>
                 <textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} placeholder="Any additional details…" /></div>
             </div>
