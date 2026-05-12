@@ -370,23 +370,24 @@ export default function Dashboard() {
     setSaving(false); setModalOpen(false)
   }
 
-  async function endUsage() {
-    if (!editId) return
+  async function endUsage(itemId?: string) {
+    const id = itemId ?? editId
+    if (!id) return
     const todayDB = new Date().toISOString().slice(0, 10)
     // Close the open UH entry
     const { data: openEntry } = await supabase.from('item_user_history')
-      .select('id').eq('item_id', editId).is('date_to', null)
+      .select('id').eq('item_id', id).is('date_to', null)
       .order('date_from', { ascending: false }).limit(1)
     if (openEntry && openEntry.length > 0) {
       await supabase.from('item_user_history').update({ date_to: todayDB }).eq('id', openEntry[0].id)
     }
     // Clear assigned_to and date_acquired on item
-    await supabase.from('items').update({ assigned_to: null, date_acquired: null, updated_at: new Date().toISOString() }).eq('id', editId)
+    await supabase.from('items').update({ assigned_to: null, date_acquired: null, updated_at: new Date().toISOString() }).eq('id', id)
     setForm(f => ({ ...f, assigned_to: '', date_acquired: '' }))
     await loadItems()
-    if (selectedItem?.id === editId) {
+    if (selectedItem?.id === id) {
       setSelectedItem(prev => prev ? { ...prev, assigned_to: '', date_acquired: null } as Item : prev)
-      await loadUserHistory(editId)
+      await loadUserHistory(id)
     }
     toast('Usage ended')
   }
@@ -1003,6 +1004,19 @@ export default function Dashboard() {
                             {fmtDate(selectedItem.date_acquired)}
                           </span>}
                     </div>
+
+                    {/* End Usage */}
+                    {role === 'admin' && (
+                      <div style={{ paddingTop: 10 }}>
+                        <button type="button" onClick={() => endUsage(selectedItem.id)}
+                          style={{ fontFamily: 'var(--font)', fontSize: 11, fontWeight: 500, padding: '6px 12px', borderRadius: 'var(--radius)', border: '1px solid rgba(185,28,28,0.35)', background: '#fce8e8', color: '#b91c1c', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 11, height: 11 }}>
+                            <path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 1.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM5.5 7.25h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1 0-1.5Z"/>
+                          </svg>
+                          End Usage
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="panel-section">
