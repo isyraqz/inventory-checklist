@@ -631,6 +631,7 @@ export default function Dashboard() {
 
           {/* Desktop table */}
           <div className="table-card">
+            <div className="table-scroll">
             <table>
               <thead>
                 <tr>
@@ -642,12 +643,16 @@ export default function Dashboard() {
                     </th>
                   )}
                   <th style={{ width: 48, cursor: 'default', color: 'var(--text-hint)' }}>No</th>
-                  {COL_LABELS.map(({ key, label }) => (
-                    <th key={key} onClick={() => handleSort(key)}
-                      className={sortKey === key ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : ''}>
-                      {label}
-                    </th>
-                  ))}
+                  {COL_LABELS.map(({ key, label }) => {
+                    const colCls: Record<string, string> = { brand: 'col-brand', assigned_to: 'col-assigned', date_acquired: 'col-date', remarks: 'col-remarks' }
+                    const sortCls = sortKey === key ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : ''
+                    return (
+                      <th key={key} onClick={() => handleSort(key)}
+                        className={[sortCls, colCls[key] ?? ''].filter(Boolean).join(' ')}>
+                        {label}
+                      </th>
+                    )
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -680,17 +685,18 @@ export default function Dashboard() {
                     )}
                     <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-hint)' }}>{String(idx + 1).padStart(3, '0')}</td>
                     <td className="item-name">{item.name}</td>
-                    <td>{item.brand || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
+                    <td className="col-brand">{item.brand || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
                     <td><span className={`badge ${STATUS_CLASS[item.status] ?? ''}`}>{item.status}</span></td>
-                    <td>{item.assigned_to || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
-                    <td className="mono" style={{ fontSize: 11 }}>{fmtDate(item.date_acquired)}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td className="col-assigned">{item.assigned_to || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
+                    <td className="col-date mono" style={{ fontSize: 11 }}>{fmtDate(item.date_acquired)}</td>
+                    <td className="col-remarks" style={{ color: 'var(--text-muted)', fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.remarks || <span style={{ color: 'var(--text-hint)' }}>—</span>}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>{/* end table-scroll */}
           </div>
 
           {/* Keyboard shortcut hint */}

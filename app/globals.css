@@ -598,6 +598,18 @@ input[type="checkbox"] {
   .chart-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
 
   /* Detail panel: full-screen on mobile */
+  .detail-panel.open {
+    position: fixed;
+    inset: 0;
+    top: 60px;
+    width: 100% !important;
+    z-index: 100;
+    border-left: none;
+    box-shadow: var(--shadow-modal);
+  }
+
+  /* Hide less-critical columns on mobile — keep No, Name, Status */
+  .col-brand, .col-assigned, .col-date, .col-remarks { display: none; }
 
   /* Toast: stretch to edges */
   .toast-wrap { right: 1rem; left: 1rem; bottom: 1rem; }
