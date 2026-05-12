@@ -118,6 +118,9 @@ export default function Dashboard() {
   const [logsLoading, setLogsLoading] = useState(false)
   const [logInput, setLogInput] = useState('')
   const [logSaving, setLogSaving] = useState(false)
+  const [logAddOpen, setLogAddOpen] = useState(false)
+  const [editingLog, setEditingLog] = useState<string | null>(null)
+  const [logEditValue, setLogEditValue] = useState('')
   const [userHistory, setUserHistory] = useState<UserHistory[]>([])
   const [uhLoading, setUhLoading] = useState(false)
   const [uhForm, setUhForm] = useState({ user_name: '', date_from: '', date_to: '' })
@@ -198,7 +201,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (selectedItem) {
-      setLogInput(''); setUhForm({ user_name: '', date_from: '', date_to: '' })
+      setLogInput(''); setLogAddOpen(false); setEditingLog(null)
+      setUhForm({ user_name: '', date_from: '', date_to: '' })
       loadLogs(selectedItem.id); loadUserHistory(selectedItem.id); loadPhotos(selectedItem.id)
       setPanelEditMode(false); setEditingField(null)
     } else {
@@ -363,8 +367,18 @@ export default function Dashboard() {
     const { error } = await supabase.from('maintenance_logs').insert({
       item_id: selectedItem.id, user_id: userId, logged_by: userEmail, description: logInput.trim(),
     })
-    if (!error) { setLogInput(''); await loadLogs(selectedItem.id); toast('Log added') }
+    if (!error) { setLogInput(''); setLogAddOpen(false); await loadLogs(selectedItem.id); toast('Log added') }
     setLogSaving(false)
+  }
+  async function saveLogEntry(id: string) {
+    if (!logEditValue.trim() || !selectedItem) return
+    await supabase.from('maintenance_logs').update({ description: logEditValue.trim() }).eq('id', id)
+    setEditingLog(null); await loadLogs(selectedItem.id); toast('Log updated')
+  }
+  async function deleteLogEntry(id: string) {
+    if (!confirm('Delete this log entry?') || !selectedItem) return
+    await supabase.from('maintenance_logs').delete().eq('id', id)
+    setEditingLog(null); await loadLogs(selectedItem.id); toast('Log deleted')
   }
 
   async function deleteItem(item: Item) {
@@ -1124,20 +1138,71 @@ export default function Dashboard() {
                   </div>
 
                   <div className="panel-section">
-                    <div className="panel-section-title">Maintenance Log</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div className="panel-section-title" style={{ marginBottom: 0 }}>Maintenance Log</div>
+                      {role === 'admin' && !logAddOpen && (
+                        <button type="button" onClick={() => { setLogAddOpen(true); setEditingLog(null) }}
+                          style={{ fontSize: 11, background: 'none', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font)' }}>
+                          + Add
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Add form */}
+                    {logAddOpen && role === 'admin' && (
+                      <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <textarea value={logInput} rows={3} placeholder="Describe the maintenance…"
+                          onChange={e => setLogInput(e.target.value)}
+                          style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%', resize: 'vertical' }} />
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => { setLogAddOpen(false); setLogInput('') }}
+                            className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                          <button onClick={addLog} disabled={logSaving || !logInput.trim()}
+                            className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
+                            {logSaving ? 'Saving…' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {logsLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
                       : logs.length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
                       : <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                           {logs.map((log, i) => (
-                            <div key={log.id} style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative' }}>
-                              {i < logs.length - 1 && <div style={{ position: 'absolute', left: 5, top: 14, bottom: 0, width: 1, background: 'var(--border)' }} />}
-                              <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 3, zIndex: 1 }} />
-                              <div style={{ flex: 1 }}>
-                                <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
-                                <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
-                                  {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
-                                </p>
-                              </div>
+                            <div key={log.id}>
+                              {editingLog === log.id ? (
+                                <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                  <textarea value={logEditValue} rows={3}
+                                    onChange={e => setLogEditValue(e.target.value)}
+                                    style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%', resize: 'vertical' }} />
+                                  <p style={{ fontSize: 10, color: 'var(--text-hint)', fontFamily: 'var(--mono)', margin: 0 }}>
+                                    {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
+                                  </p>
+                                  <div style={{ display: 'flex', gap: 6 }}>
+                                    <button onClick={() => deleteLogEntry(log.id)}
+                                      className="btn" style={{ height: 32, fontSize: 12, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 10px' }}>Delete</button>
+                                    <button onClick={() => setEditingLog(null)}
+                                      className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                                    <button onClick={() => saveLogEntry(log.id)} disabled={!logEditValue.trim()}
+                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative' }}
+                                  onClick={() => { if (role === 'admin') { setEditingLog(log.id); setLogAddOpen(false); setLogEditValue(log.description) } }}
+                                  onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
+                                  style={{ cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px' }}>
+                                  {i < logs.length - 1 && <div style={{ position: 'absolute', left: 11, top: 18, bottom: 0, width: 1, background: 'var(--border)' }} />}
+                                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 5, zIndex: 1 }} />
+                                  <div style={{ flex: 1 }}>
+                                    <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
+                                    <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
+                                      {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>}
