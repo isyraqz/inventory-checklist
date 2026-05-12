@@ -27,7 +27,7 @@ const COL_LABELS: { key: SortKey; label: string }[] = [
   { key: 'brand',         label: 'Brand' },
   { key: 'assigned_to',   label: 'Assigned To' },
   { key: 'status',        label: 'Status' },
-  { key: 'date_acquired', label: 'Issue Date' },
+  { key: 'date_acquired', label: 'Assigned Date' },
   { key: 'remarks',       label: 'Remarks' },
 ]
 
@@ -80,7 +80,7 @@ function parseCSV(text: string): Partial<ItemFormData>[] {
       assigned_to: get(v, ['assigned to', 'assigned_to']),
       category: (get(v, ['category']) as Category) || 'IT',
       department: get(v, ['department']),
-      date_acquired: get(v, ['issue date', 'issued date', 'date acquired', 'date_acquired']),
+      date_acquired: get(v, ['assigned date', 'assigned date', 'date acquired', 'date_acquired']),
       warranty_exp: get(v, ['warranty exp', 'warranty_exp']),
       last_checked: get(v, ['last checked', 'last_checked']),
       remarks: get(v, ['remarks']),
@@ -526,7 +526,7 @@ export default function Dashboard() {
   }
 
   function exportCSV() {
-    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Issue Date', 'Warranty Exp', 'Last Checked', 'Remarks']
+    const headers = ['No', 'Item Name', 'Brand', 'Serial Number', 'Status', 'Condition', 'Assigned To', 'Category', 'Department', 'Assigned Date', 'Warranty Exp', 'Last Checked', 'Remarks']
     const rows = items.map(i =>
       [String(i.item_no ?? '').padStart(3, '0'), i.name, i.brand ?? '', i.serial,
         i.status, i.condition, i.assigned_to, i.category, i.department ?? '',
@@ -854,7 +854,7 @@ export default function Dashboard() {
                       </select>
                     </div>
                   ))}
-                  {[{ label: 'Issue date', key: 'date_acquired' }, { label: 'Warranty exp', key: 'warranty_exp' }, { label: 'Last checked', key: 'last_checked' }].map(({ label, key }) => (
+                  {[{ label: 'Assigned date', key: 'date_acquired' }, { label: 'Warranty exp', key: 'warranty_exp' }, { label: 'Last checked', key: 'last_checked' }].map(({ label, key }) => (
                     <div key={key}>
                       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 4 }}>{label}</div>
                       <DatePicker value={(panelForm as Record<string, string>)[key] ?? ''} onChange={v => setPanelForm(f => ({ ...f, [key]: v }))} />
@@ -912,8 +912,8 @@ export default function Dashboard() {
                           </span>}
                     </div>
 
-                    {/* Issue date */}
-                    <div className="detail-row"><span className="detail-key">Issue date</span>
+                    {/* Assigned date */}
+                    <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
                         ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('date_acquired', v) }} placeholder="DD-MM-YYYY" />
@@ -1267,7 +1267,7 @@ export default function Dashboard() {
                   <option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option></select></div>
               <div className="form-field"><label>Department</label>
                 <input type="text" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="e.g. IT, HR, Finance" /></div>
-              <div className="form-field"><label>Issue date</label>
+              <div className="form-field"><label>Assigned date</label>
                 <DatePicker value={form.date_acquired} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} /></div>
               <div className="form-field"><label>Purchased date</label>
                 <DatePicker value={form.purchased_date} onChange={v => setForm(f => ({ ...f, purchased_date: v }))} /></div>
@@ -1368,7 +1368,7 @@ export default function Dashboard() {
                 <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: 'var(--surface2)', position: 'sticky', top: 0 }}>
-                      {['Item Name', 'Brand', 'Status', 'Assigned To', 'Issue Date', 'Category'].map(h => (
+                      {['Item Name', 'Brand', 'Status', 'Assigned To', 'Assigned Date', 'Category'].map(h => (
                         <th key={h} style={{ padding: '7px 10px', textAlign: 'left', fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -1391,7 +1391,7 @@ export default function Dashboard() {
               <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-hint)', fontSize: 13 }}>No valid rows found.</div>
             )}
             <p style={{ fontSize: 11, color: 'var(--text-hint)', marginBottom: 16, lineHeight: 1.6 }}>
-              Expected columns: <span style={{ fontFamily: 'var(--mono)' }}>Item Name, Brand, Serial Number, Status, Condition, Assigned To, Category, Department, Issue Date, Warranty Exp, Last Checked, Remarks</span>
+              Expected columns: <span style={{ fontFamily: 'var(--mono)' }}>Item Name, Brand, Serial Number, Status, Condition, Assigned To, Category, Department, Assigned Date, Warranty Exp, Last Checked, Remarks</span>
             </p>
             <div className="modal-footer">
               <button className="btn" onClick={() => setImportOpen(false)}>Cancel</button>
