@@ -1084,7 +1084,7 @@ export default function Dashboard() {
                         <input type="text" value={uhForm.user_name} placeholder="User name"
                           onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
                           style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                           <div>
                             <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
                             <DatePicker value={uhForm.date_from} onChange={v => setUhForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
@@ -1115,13 +1115,13 @@ export default function Dashboard() {
                               <input type="text" value={uhEditForm.user_name} placeholder="User name"
                                 onChange={e => setUhEditForm(f => ({ ...f, user_name: e.target.value }))}
                                 style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 <div>
                                   <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
                                   <DatePicker value={uhEditForm.date_from} onChange={v => setUhEditForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
+                                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To (optional)</div>
                                   <DatePicker value={uhEditForm.date_to} onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                                 </div>
                               </div>
@@ -1310,7 +1310,7 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <input type="text" value={uhForm.user_name} onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))} placeholder="User name"
                       style={{ fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>From</div>
                         <DatePicker value={uhForm.date_from} onChange={v => setUhForm(f => ({ ...f, date_from: v }))} /></div>
                       <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>To (optional)</div>
