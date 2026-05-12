@@ -1108,11 +1108,11 @@ export default function Dashboard() {
                             </div>
                           ) : (
                             /* Display row */
-                            <div className="detail-row" style={{ alignItems: 'center' }}
+                            <div className="detail-row"
                               onClick={() => { if (role === 'admin') { setEditingUh(h.id); setUhAddOpen(false); setUhEditForm({ user_name: h.user_name, date_from: toFormDate(h.date_from), date_to: toFormDate(h.date_to) }) } }}
                               onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
                               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                              style={{ cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px' }}>
+                              style={{ alignItems: 'center', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px' }}>
                               <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>{h.user_name}</span>
                               <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
                                 {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
