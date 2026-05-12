@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Item, ItemFormData, Category, Condition, ItemStatus, MaintenanceLog, UserHistory, ItemPhoto } from '@/lib/types'
+import type { Item, ItemFormData, ItemStatus, MaintenanceLog, UserHistory, ItemPhoto } from '@/lib/types'
 import DatePicker from '@/components/DatePicker'
 import ChartPanel from '@/components/ChartPanel'
 
