@@ -317,6 +317,8 @@ td {
 tr:last-child td { border-bottom: none; }
 tr.row-checked td { opacity: 0.45; }
 tr.row-checked td.no-strike { opacity: 1; }
+tr.row-retired td { opacity: 0.5; }
+tr.row-retired td.no-strike { opacity: 1; }
 tr { transition: background 0.1s; }
 tr:hover td { background: var(--surface2); }
 
@@ -341,6 +343,7 @@ tr:hover td { background: var(--surface2); }
 .b-available  { background: #e6f4ea; color: #276b3a; }
 .b-inuse      { background: #e8e8e8; color: #555555; }
 .b-maintenance{ background: #fce8e8; color: #b91c1c; }
+.b-retired    { background: #f0f0f0; color: #999; text-decoration: line-through; }
 
 [data-theme="dark"] .b-good      { background: #14381f; color: #6ee7a0; }
 [data-theme="dark"] .b-fair      { background: #3a2500; color: #fbbf24; }
@@ -352,6 +355,7 @@ tr:hover td { background: var(--surface2); }
 [data-theme="dark"] .b-available   { background: #14381f; color: #6ee7a0; }
 [data-theme="dark"] .b-inuse       { background: #3a3a3a; color: #b0b0b0; }
 [data-theme="dark"] .b-maintenance { background: #3a1010; color: #f87171; }
+[data-theme="dark"] .b-retired     { background: #2a2a2a; color: #666; text-decoration: line-through; }
 
 /* ── Checkbox ── */
 input[type="checkbox"] {

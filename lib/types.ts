@@ -10,7 +10,7 @@ export interface MaintenanceLog {
   created_at: string
 }
 export type Condition = 'Good' | 'Fair' | 'Poor'
-export type ItemStatus = 'Available' | 'In use' | 'Maintenance'
+export type ItemStatus = 'Available' | 'In use' | 'Maintenance' | 'Retired'
 
 export interface Item {
   id: string

@@ -14,7 +14,7 @@ const EMPTY_FORM: ItemFormData = {
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  Available: 'b-available', 'In use': 'b-inuse', Maintenance: 'b-maintenance',
+  Available: 'b-available', 'In use': 'b-inuse', Maintenance: 'b-maintenance', Retired: 'b-retired',
 }
 const COND_CLASS: Record<string, string> = {
   Good: 'b-good', Fair: 'b-fair', Poor: 'b-poor',
@@ -110,6 +110,7 @@ export default function Dashboard() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [userEmail, setUserEmail] = useState('')
   const [role, setRole] = useState<'admin' | 'viewer'>('viewer')
+  const [showRetired, setShowRetired] = useState(false)
   const [auditChecked, setAuditChecked] = useState<Set<string>>(new Set())
   const [userId, setUserId] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
@@ -542,6 +543,7 @@ export default function Dashboard() {
 
   const filtered = items
     .filter(i =>
+      (showRetired || i.status !== 'Retired') &&
       (!search || [i.name, i.brand, i.serial, i.assigned_to, i.department, i.remarks]
         .some(f => (f || '').toLowerCase().includes(search.toLowerCase()))) &&
       (!filterCat || i.category === filterCat) &&
@@ -556,7 +558,8 @@ export default function Dashboard() {
   // Keep snap updated for keyboard handler
   snap.current = { selectedItem, role, modalOpen, importOpen, panelEditMode, filtered }
 
-  const total = items.length
+  const retiredCount = items.filter(i => i.status === 'Retired').length
+  const total = items.filter(i => i.status !== 'Retired').length
   const checkedCount = auditChecked.size
   const avail = items.filter(i => i.status === 'Available').length
   const maint = items.filter(i => i.status === 'Maintenance').length
@@ -616,6 +619,12 @@ export default function Dashboard() {
               <div className="stat-label" style={{ color: '#b91c1c' }}>Maintenance</div>
               <div className="stat-value" style={{ color: '#b91c1c' }}>{maint}</div>
             </div>
+            {retiredCount > 0 && (
+              <div className="stat-card" style={{ background: '#f7f7f7', borderColor: '#e2e2e2' }}>
+                <div className="stat-label" style={{ color: '#999' }}>Retired</div>
+                <div className="stat-value" style={{ color: '#999' }}>{retiredCount}</div>
+              </div>
+            )}
           </div>
 
           {/* Progress */}
@@ -641,8 +650,15 @@ export default function Dashboard() {
             </div>
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
               <option value="">All statuses</option>
-              <option>Available</option><option>In use</option><option>Maintenance</option>
+              <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
             </select>
+            {retiredCount > 0 && (
+              <button className="btn" onClick={() => setShowRetired(s => !s)}
+                style={showRetired ? { background: '#1e3a5f', color: '#fff', borderColor: '#1e3a5f' } : { color: '#999', borderColor: '#ddd' }}>
+                {showRetired ? 'Hide retired' : 'Show retired'}
+                <span style={{ marginLeft: 5, background: showRetired ? 'rgba(255,255,255,0.2)' : '#eee', color: showRetired ? '#fff' : '#999', borderRadius: 10, padding: '1px 6px', fontSize: 11 }}>{retiredCount}</span>
+              </button>
+            )}
             <select value={filterCat} onChange={e => setFilterCat(e.target.value)}>
               <option value="">All categories</option>
               <option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option>
@@ -690,7 +706,7 @@ export default function Dashboard() {
                 <select defaultValue="" onChange={e => { if (e.target.value) { bulkSetStatus(e.target.value as ItemStatus); e.currentTarget.value = '' } }}
                   style={{ height: 32, fontSize: 12 }}>
                   <option value="" disabled>Set status…</option>
-                  <option>Available</option><option>In use</option><option>Maintenance</option>
+                  <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
                 </select>
                 <button className="btn" onClick={bulkDelete}
                   style={{ height: 32, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 12px', fontSize: 12 }}>
@@ -758,6 +774,7 @@ export default function Dashboard() {
                     className={[
                       role === 'admin' && auditChecked.has(item.id) ? 'row-checked' : '',
                       selectedItem?.id === item.id ? 'row-selected' : '',
+                      item.status === 'Retired' ? 'row-retired' : '',
                     ].filter(Boolean).join(' ')}>
                     {role === 'admin' && (
                       <td className="no-strike" onClick={e => e.stopPropagation()}>
@@ -848,7 +865,7 @@ export default function Dashboard() {
                       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 4 }}>{key.charAt(0).toUpperCase() + key.slice(1)}</div>
                       <select value={(panelForm as Record<string, string>)[key] ?? ''} onChange={e => setPanelForm(f => ({ ...f, [key]: e.target.value }))}
                         style={{ width: '100%', fontSize: 12, height: 34 }}>
-                        {key === 'status' && <><option>Available</option><option>In use</option><option>Maintenance</option></>}
+                        {key === 'status' && <><option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option></>}
                         {key === 'condition' && <><option>Good</option><option>Fair</option><option>Poor</option></>}
                         {key === 'category' && <><option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option></>}
                       </select>
@@ -881,7 +898,7 @@ export default function Dashboard() {
                       {editingField === 'status'
                         ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('status', e.target.value) }} onBlur={() => setEditingField(null)}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
-                            {['Available','In use','Maintenance'].map(o => <option key={o}>{o}</option>)}
+                            {['Available','In use','Maintenance','Retired'].map(o => <option key={o}>{o}</option>)}
                           </select>
                         : <span className="detail-val" onClick={() => role === 'admin' && startEdit('status', selectedItem.status)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
                             <span className={`badge ${STATUS_CLASS[selectedItem.status] ?? ''}`}>{selectedItem.status}</span>
@@ -1256,7 +1273,7 @@ export default function Dashboard() {
                 <input type="text" value={form.serial} onChange={e => setForm(f => ({ ...f, serial: e.target.value }))} placeholder="e.g. SN-DL5520-001" /></div>
               <div className="form-field"><label>Status</label>
                 <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as ItemStatus }))}>
-                  <option>Available</option><option>In use</option><option>Maintenance</option></select></div>
+                  <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option></select></div>
               <div className="form-field"><label>Condition</label>
                 <select value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}>
                   <option>Good</option><option>Fair</option><option>Poor</option></select></div>
