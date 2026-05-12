@@ -619,12 +619,6 @@ export default function Dashboard() {
               <div className="stat-label" style={{ color: '#b91c1c' }}>Maintenance</div>
               <div className="stat-value" style={{ color: '#b91c1c' }}>{maint}</div>
             </div>
-            {retiredCount > 0 && (
-              <div className="stat-card" style={{ background: '#f7f7f7', borderColor: '#e2e2e2' }}>
-                <div className="stat-label" style={{ color: '#999' }}>Retired</div>
-                <div className="stat-value" style={{ color: '#999' }}>{retiredCount}</div>
-              </div>
-            )}
           </div>
 
           {/* Progress */}
