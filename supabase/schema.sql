@@ -25,3 +25,22 @@ create policy "Users manage their own items"
   for all
   using  (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- ── Item photos ──
+-- Also create a Storage bucket named "item-photos" set to PUBLIC in Supabase dashboard.
+create table public.item_photos (
+  id           uuid default gen_random_uuid() primary key,
+  item_id      uuid references public.items(id) on delete cascade not null,
+  user_id      uuid references auth.users(id) not null,
+  storage_path text not null,
+  url          text not null,
+  uploaded_at  timestamptz not null default now()
+);
+
+alter table public.item_photos enable row level security;
+
+create policy "Users manage their own item photos"
+  on public.item_photos
+  for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

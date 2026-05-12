@@ -52,6 +52,15 @@ export type ItemFormData = {
   checked: boolean
 }
 
+export interface ItemPhoto {
+  id: string
+  item_id: string
+  user_id: string
+  storage_path: string
+  url: string
+  uploaded_at: string
+}
+
 export interface UserHistory {
   id: string
   item_id: string

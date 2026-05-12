@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Item, ItemFormData, Category, Condition, ItemStatus, MaintenanceLog, UserHistory } from '@/lib/types'
+import type { Item, ItemFormData, Category, Condition, ItemStatus, MaintenanceLog, UserHistory, ItemPhoto } from '@/lib/types'
 import DatePicker from '@/components/DatePicker'
 import ChartPanel from '@/components/ChartPanel'
 
@@ -132,6 +132,11 @@ export default function Dashboard() {
   const [importError, setImportError] = useState('')
   const [importing, setImporting] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
+  const [photos, setPhotos] = useState<ItemPhoto[]>([])
+  const [photosLoading, setPhotosLoading] = useState(false)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [lightbox, setLightbox] = useState<string | null>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   const toastId = useRef(0)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -165,6 +170,13 @@ export default function Dashboard() {
     setUhLoading(false)
   }, [supabase])
 
+  const loadPhotos = useCallback(async (itemId: string) => {
+    setPhotosLoading(true)
+    const { data } = await supabase.from('item_photos').select('*').eq('item_id', itemId).order('uploaded_at', { ascending: false })
+    setPhotos((data as ItemPhoto[]) || [])
+    setPhotosLoading(false)
+  }, [supabase])
+
   useEffect(() => {
     loadItems()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -182,12 +194,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedItem) {
       setLogInput(''); setUhForm({ user_name: '', date_from: '', date_to: '' })
-      loadLogs(selectedItem.id); loadUserHistory(selectedItem.id)
+      loadLogs(selectedItem.id); loadUserHistory(selectedItem.id); loadPhotos(selectedItem.id)
       setPanelEditMode(false)
     } else {
-      setLogs([]); setUserHistory([])
+      setLogs([]); setUserHistory([]); setPhotos([])
     }
-  }, [selectedItem, loadLogs, loadUserHistory])
+  }, [selectedItem, loadLogs, loadUserHistory, loadPhotos])
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
@@ -345,6 +357,29 @@ export default function Dashboard() {
   }
 
   // ── Panel quick edit ──
+  // ── Photo upload / delete ──
+  async function uploadPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; e.target.value = ''
+    if (!file || !selectedItem) return
+    setPhotoUploading(true)
+    const { data: { user } } = await supabase.auth.getUser(); if (!user) return
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const path = `${user.id}/${selectedItem.id}/${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('item-photos').upload(path, file)
+    if (upErr) { toast('Upload failed: ' + upErr.message); setPhotoUploading(false); return }
+    const { data: { publicUrl } } = supabase.storage.from('item-photos').getPublicUrl(path)
+    await supabase.from('item_photos').insert({ item_id: selectedItem.id, user_id: user.id, storage_path: path, url: publicUrl })
+    await loadPhotos(selectedItem.id)
+    setPhotoUploading(false); toast('Photo uploaded')
+  }
+  async function deletePhoto(photo: ItemPhoto) {
+    if (!confirm('Delete this photo?')) return
+    await supabase.storage.from('item-photos').remove([photo.storage_path])
+    await supabase.from('item_photos').delete().eq('id', photo.id)
+    setPhotos(prev => prev.filter(p => p.id !== photo.id))
+    toast('Photo deleted')
+  }
+
   function startPanelEdit() {
     if (!selectedItem) return
     setPanelForm({
@@ -796,6 +831,48 @@ export default function Dashboard() {
                     <p className="panel-remarks">{selectedItem.remarks || '—'}</p>
                   </div>
 
+                  {/* Photos */}
+                  <div className="panel-section">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div className="panel-section-title" style={{ marginBottom: 0 }}>Photos</div>
+                      {role === 'admin' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => photoInputRef.current?.click()}
+                            disabled={photoUploading}
+                            style={{ fontSize: 11, background: 'none', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font)' }}>
+                            {photoUploading ? 'Uploading…' : '+ Upload'}
+                          </button>
+                          <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={uploadPhoto} />
+                        </>
+                      )}
+                    </div>
+                    {photosLoading ? (
+                      <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
+                    ) : photos.length === 0 ? (
+                      <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No photos yet.</p>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                        {photos.map(photo => (
+                          <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: '1px solid var(--border)' }}
+                            onClick={() => setLightbox(photo.url)}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            {role === 'admin' && (
+                              <button
+                                type="button"
+                                onClick={e => { e.stopPropagation(); deletePhoto(photo) }}
+                                style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="panel-section">
                     <div className="panel-section-title">User History</div>
                     {uhLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
@@ -962,6 +1039,15 @@ export default function Dashboard() {
               <button className="btn btn-primary" onClick={saveItem} disabled={saving}>{saving ? 'Saving…' : 'Save item'}</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 10, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }} onClick={e => e.stopPropagation()} />
+          <button onClick={() => setLightbox(null)} style={{ position: 'absolute', top: 20, right: 24, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 20, width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
       )}
 
