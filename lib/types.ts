@@ -6,6 +6,7 @@ export interface MaintenanceLog {
   user_id: string
   logged_by: string
   description: string
+  log_date: string | null
   created_at: string
 }
 export type Condition = 'Good' | 'Fair' | 'Poor'

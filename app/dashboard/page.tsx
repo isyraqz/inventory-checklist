@@ -119,8 +119,10 @@ export default function Dashboard() {
   const [logInput, setLogInput] = useState('')
   const [logSaving, setLogSaving] = useState(false)
   const [logAddOpen, setLogAddOpen] = useState(false)
+  const [logAddDate, setLogAddDate] = useState('')
   const [editingLog, setEditingLog] = useState<string | null>(null)
   const [logEditValue, setLogEditValue] = useState('')
+  const [logEditDate, setLogEditDate] = useState('')
   const [userHistory, setUserHistory] = useState<UserHistory[]>([])
   const [uhLoading, setUhLoading] = useState(false)
   const [uhForm, setUhForm] = useState({ user_name: '', date_from: '', date_to: '' })
@@ -201,7 +203,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (selectedItem) {
-      setLogInput(''); setLogAddOpen(false); setEditingLog(null)
+      setLogInput(''); setLogAddDate(''); setLogAddOpen(false); setEditingLog(null); setLogEditDate('')
       setUhForm({ user_name: '', date_from: '', date_to: '' })
       loadLogs(selectedItem.id); loadUserHistory(selectedItem.id); loadPhotos(selectedItem.id)
       setPanelEditMode(false); setEditingField(null)
@@ -366,13 +368,14 @@ export default function Dashboard() {
     setLogSaving(true)
     const { error } = await supabase.from('maintenance_logs').insert({
       item_id: selectedItem.id, user_id: userId, logged_by: userEmail, description: logInput.trim(),
+      log_date: toDBDate(logAddDate) || null,
     })
-    if (error) { toast('Error: ' + error.message) } else { setLogInput(''); setLogAddOpen(false); await loadLogs(selectedItem.id); toast('Log added') }
+    if (error) { toast('Error: ' + error.message) } else { setLogInput(''); setLogAddDate(''); setLogAddOpen(false); await loadLogs(selectedItem.id); toast('Log added') }
     setLogSaving(false)
   }
   async function saveLogEntry(id: string) {
     if (!logEditValue.trim() || !selectedItem) return
-    await supabase.from('maintenance_logs').update({ description: logEditValue.trim() }).eq('id', id)
+    await supabase.from('maintenance_logs').update({ description: logEditValue.trim(), log_date: toDBDate(logEditDate) || null }).eq('id', id)
     setEditingLog(null); await loadLogs(selectedItem.id); toast('Log updated')
   }
   async function deleteLogEntry(id: string) {
@@ -1154,8 +1157,12 @@ export default function Dashboard() {
                         <textarea value={logInput} rows={3} placeholder="Describe the maintenance…"
                           onChange={e => setLogInput(e.target.value)}
                           style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%', resize: 'vertical' }} />
+                        <div>
+                          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>Date</div>
+                          <DatePicker value={logAddDate} onChange={setLogAddDate} placeholder="DD-MM-YYYY" />
+                        </div>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => { setLogAddOpen(false); setLogInput('') }}
+                          <button onClick={() => { setLogAddOpen(false); setLogInput(''); setLogAddDate('') }}
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                           <button onClick={addLog} disabled={logSaving || !logInput.trim() || !userId}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
@@ -1175,8 +1182,12 @@ export default function Dashboard() {
                                   <textarea value={logEditValue} rows={3}
                                     onChange={e => setLogEditValue(e.target.value)}
                                     style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%', resize: 'vertical' }} />
+                                  <div>
+                                    <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>Date</div>
+                                    <DatePicker value={logEditDate} onChange={setLogEditDate} placeholder="DD-MM-YYYY" />
+                                  </div>
                                   <p style={{ fontSize: 10, color: 'var(--text-hint)', fontFamily: 'var(--mono)', margin: 0 }}>
-                                    {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
+                                    logged by {log.logged_by}
                                   </p>
                                   <div style={{ display: 'flex', gap: 6 }}>
                                     <button onClick={() => deleteLogEntry(log.id)}
@@ -1189,7 +1200,7 @@ export default function Dashboard() {
                                 </div>
                               ) : (
                                 <div
-                                  onClick={() => { if (role === 'admin') { setEditingLog(log.id); setLogAddOpen(false); setLogEditValue(log.description) } }}
+                                  onClick={() => { if (role === 'admin') { setEditingLog(log.id); setLogAddOpen(false); setLogEditValue(log.description); setLogEditDate(toFormDate(log.log_date)) } }}
                                   onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
                                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
                                   style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px' }}>
@@ -1198,7 +1209,7 @@ export default function Dashboard() {
                                   <div style={{ flex: 1 }}>
                                     <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
                                     <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
-                                      {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
+                                      {log.log_date ? fmtDate(log.log_date) : new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
                                     </p>
                                   </div>
                                 </div>

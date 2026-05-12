@@ -52,6 +52,7 @@ create table public.maintenance_logs (
   user_id     uuid references auth.users(id) not null,
   logged_by   text not null default '',
   description text not null,
+  log_date    date,
   created_at  timestamptz not null default now()
 );
 
