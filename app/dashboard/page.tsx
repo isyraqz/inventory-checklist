@@ -926,7 +926,7 @@ export default function Dashboard() {
                     {/* Assigned date */}
                     <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
-                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        ? <div style={{ flex: 1, minWidth: 0 }}>
                             <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('date_acquired', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)} style={role === 'admin' ? { cursor: 'text' } : {}}>
@@ -981,7 +981,7 @@ export default function Dashboard() {
                     {/* Purchased date */}
                     <div className="detail-row"><span className="detail-key">Purchased date</span>
                       {editingField === 'purchased_date'
-                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        ? <div style={{ flex: 1, minWidth: 0 }}>
                             <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('purchased_date', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('purchased_date', selectedItem.purchased_date)} style={role === 'admin' ? { cursor: 'text' } : {}}>
@@ -992,7 +992,7 @@ export default function Dashboard() {
                     {/* Warranty exp */}
                     <div className="detail-row"><span className="detail-key">Warranty exp.</span>
                       {editingField === 'warranty_exp'
-                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        ? <div style={{ flex: 1, minWidth: 0 }}>
                             <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('warranty_exp', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('warranty_exp', selectedItem.warranty_exp)} style={role === 'admin' ? { cursor: 'text' } : {}}>
@@ -1003,7 +1003,7 @@ export default function Dashboard() {
                     {/* Last checked */}
                     <div className="detail-row"><span className="detail-key">Last checked</span>
                       {editingField === 'last_checked'
-                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        ? <div style={{ flex: 1, minWidth: 0 }}>
                             <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('last_checked', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('last_checked', selectedItem.last_checked)} style={role === 'admin' ? { cursor: 'text' } : {}}>

@@ -104,6 +104,7 @@ body {
   flex: 1;
   padding: 1.75rem 2rem;
   overflow-y: auto;
+  overflow-x: hidden;
   min-width: 0;
 }
 
@@ -138,7 +139,7 @@ body {
   flex-shrink: 0;
 }
 .panel-close:hover { background: var(--surface2); color: var(--text); }
-.panel-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+.panel-body { padding: 16px 18px; overflow-y: auto; overflow-x: hidden; flex: 1; }
 .panel-section { margin-bottom: 20px; }
 .panel-section-title {
   font-size: 9px; font-weight: 600; letter-spacing: .08em;
