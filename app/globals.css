@@ -609,7 +609,7 @@ input[type="checkbox"] {
   }
 
   /* Hide less-critical columns on mobile — keep No, Name, Status */
-  .col-brand, .col-date, .col-remarks { display: none; }
+  .col-date, .col-remarks { display: none; }
 
   /* Toast: stretch to edges */
   .toast-wrap { right: 1rem; left: 1rem; bottom: 1rem; }
