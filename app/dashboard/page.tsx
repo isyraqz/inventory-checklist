@@ -367,7 +367,7 @@ export default function Dashboard() {
     const { error } = await supabase.from('maintenance_logs').insert({
       item_id: selectedItem.id, user_id: userId, logged_by: userEmail, description: logInput.trim(),
     })
-    if (!error) { setLogInput(''); setLogAddOpen(false); await loadLogs(selectedItem.id); toast('Log added') }
+    if (error) { toast('Error: ' + error.message) } else { setLogInput(''); setLogAddOpen(false); await loadLogs(selectedItem.id); toast('Log added') }
     setLogSaving(false)
   }
   async function saveLogEntry(id: string) {
@@ -1157,7 +1157,7 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => { setLogAddOpen(false); setLogInput('') }}
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
-                          <button onClick={addLog} disabled={logSaving || !logInput.trim()}
+                          <button onClick={addLog} disabled={logSaving || !logInput.trim() || !userId}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
                             {logSaving ? 'Saving…' : 'Save'}
                           </button>
