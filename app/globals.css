@@ -290,7 +290,7 @@ select { height: 38px; cursor: pointer; }
   overflow: hidden;
 }
 .table-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 13px; }
 thead tr { background: var(--surface2); }
 th {
   padding: 10px 14px;
