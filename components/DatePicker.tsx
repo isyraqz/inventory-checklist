@@ -6,6 +6,8 @@ interface Props {
   value: string       // DD-MM-YYYY or ''
   onChange: (val: string) => void
   placeholder?: string
+  minDate?: string    // DD-MM-YYYY — days before this are disabled
+  maxDate?: string    // DD-MM-YYYY — days after this are disabled
 }
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -21,7 +23,7 @@ function parseDate(dmy: string): Date | null {
 
 function fmt2(n: number) { return String(n).padStart(2, '0') }
 
-export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY' }: Props) {
+export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY', minDate, maxDate }: Props) {
   const [open, setOpen]           = useState(false)
   const [yearPicker, setYearPicker] = useState(false)
   const [viewYear, setViewYear]   = useState(new Date().getFullYear())
@@ -80,6 +82,16 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
   const years = Array.from({ length: 12 }, (_, i) => yearBase + i)
 
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const parsedMin = parseDate(minDate ?? '')
+  const parsedMax = parseDate(maxDate ?? '')
+
+  const isDisabled = (d: number) => {
+    const dt = new Date(viewYear, viewMonth, d)
+    if (parsedMin && dt < parsedMin) return true
+    if (parsedMax && dt > parsedMax) return true
+    return false
+  }
   const isToday = (d: number) =>
     today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === d
   const isSelected = (d: number) =>
@@ -193,40 +205,46 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
 
               {/* Day cells */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-                {cells.map((day, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    disabled={!day}
-                    onClick={() => day && selectDay(day)}
-                    style={{
-                      ...dayBtn,
-                      background: day && isSelected(day) ? 'var(--fg)' : 'transparent',
-                      color: day && isSelected(day) ? 'var(--bg)' : day && isToday(day) ? 'var(--accent-solid, #2563eb)' : 'var(--text)',
-                      fontWeight: day && (isSelected(day) || isToday(day)) ? 600 : 400,
-                      opacity: day ? 1 : 0,
-                      cursor: day ? 'pointer' : 'default',
-                    }}
-                  >
-                    {day}
-                  </button>
-                ))}
+                {cells.map((day, i) => {
+                  const disabled = !day || isDisabled(day)
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => day && !isDisabled(day) && selectDay(day)}
+                      style={{
+                        ...dayBtn,
+                        background: day && isSelected(day) ? 'var(--fg)' : 'transparent',
+                        color: disabled ? 'var(--text-hint)' : day && isSelected(day) ? 'var(--bg)' : day && isToday(day) ? 'var(--accent-solid, #2563eb)' : 'var(--text)',
+                        fontWeight: day && (isSelected(day) || isToday(day)) ? 600 : 400,
+                        opacity: day ? (isDisabled(day) ? 0.3 : 1) : 0,
+                        cursor: disabled ? 'default' : 'pointer',
+                        textDecoration: day && isDisabled(day) ? 'line-through' : 'none',
+                      }}
+                    >
+                      {day}
+                    </button>
+                  )
+                })}
               </div>
 
-              {/* Today shortcut */}
-              <div style={{ marginTop: 8, textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const t = new Date()
-                    onChange(`${fmt2(t.getDate())}-${fmt2(t.getMonth()+1)}-${t.getFullYear()}`)
-                    setOpen(false)
-                  }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--text-muted)', textDecoration: 'underline' }}
-                >
-                  Today
-                </button>
-              </div>
+              {/* Today shortcut — hidden when today is outside the valid range */}
+              {!isDisabled(today.getDate()) && today.getFullYear() === viewYear && today.getMonth() === viewMonth && (
+                <div style={{ marginTop: 8, textAlign: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = new Date()
+                      onChange(`${fmt2(t.getDate())}-${fmt2(t.getMonth()+1)}-${t.getFullYear()}`)
+                      setOpen(false)
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--text-muted)', textDecoration: 'underline' }}
+                  >
+                    Today
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

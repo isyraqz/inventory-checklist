@@ -46,6 +46,13 @@ function toFormDate(ymd: string | null | undefined): string {
   return ymd.split('-').reverse().join('-')
 }
 
+function todayDMY(): string {
+  const t = new Date()
+  const d = String(t.getDate()).padStart(2, '0')
+  const m = String(t.getMonth() + 1).padStart(2, '0')
+  return `${d}-${m}-${t.getFullYear()}`
+}
+
 // ── CSV helpers ──
 function parseCSVLine(line: string): string[] {
   const result: string[] = []
@@ -1087,11 +1094,16 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                           <div>
                             <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
-                            <DatePicker value={uhForm.date_from} onChange={v => setUhForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={uhForm.date_from} maxDate={todayDMY()}
+                              onChange={v => setUhForm(f => {
+                                const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
+                                return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
+                              })} placeholder="DD-MM-YYYY" />
                           </div>
                           <div>
                             <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
-                            <DatePicker value={uhForm.date_to} onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined}
+                              onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
@@ -1118,11 +1130,16 @@ export default function Dashboard() {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 <div>
                                   <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
-                                  <DatePicker value={uhEditForm.date_from} onChange={v => setUhEditForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
+                                  <DatePicker value={uhEditForm.date_from} maxDate={todayDMY()}
+                                    onChange={v => setUhEditForm(f => {
+                                      const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
+                                      return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
+                                    })} placeholder="DD-MM-YYYY" />
                                 </div>
                                 <div>
                                   <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To (optional)</div>
-                                  <DatePicker value={uhEditForm.date_to} onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                                  <DatePicker value={uhEditForm.date_to} minDate={uhEditForm.date_from || undefined}
+                                    onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                                 </div>
                               </div>
                               <div style={{ display: 'flex', gap: 6 }}>
@@ -1312,9 +1329,14 @@ export default function Dashboard() {
                       style={{ fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>From</div>
-                        <DatePicker value={uhForm.date_from} onChange={v => setUhForm(f => ({ ...f, date_from: v }))} /></div>
+                        <DatePicker value={uhForm.date_from} maxDate={todayDMY()}
+                          onChange={v => setUhForm(f => {
+                            const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
+                            return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
+                          })} /></div>
                       <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>To (optional)</div>
-                        <DatePicker value={uhForm.date_to} onChange={v => setUhForm(f => ({ ...f, date_to: v }))} /></div>
+                        <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined}
+                          onChange={v => setUhForm(f => ({ ...f, date_to: v }))} /></div>
                     </div>
                     <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()} className="btn btn-primary" style={{ justifyContent: 'center' }}>
                       {uhSaving ? 'Saving…' : 'Add user entry'}</button>
