@@ -215,7 +215,6 @@ export default function Dashboard() {
       }
       if (e.key === 'Escape') {
         setSelectedItem(null); setPanelEditMode(false)
-        setBulkSelected(new Set()); setSelectMode(false)
       }
       if ((e.key === 'e' || e.key === 'E') && selectedItem && role === 'admin') {
         e.preventDefault()
