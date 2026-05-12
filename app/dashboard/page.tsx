@@ -694,23 +694,23 @@ export default function Dashboard() {
                 <input type="checkbox"
                   checked={auditChecked.size === filtered.length && filtered.length > 0}
                   onChange={toggleSelectAll} />
-                <span style={{ fontWeight: 500 }}>{auditChecked.size} item{auditChecked.size !== 1 ? 's' : ''} selected</span>
+                <span style={{ fontWeight: 500, color: 'var(--accent-fg)' }}>{auditChecked.size} item{auditChecked.size !== 1 ? 's' : ''} selected</span>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {auditChecked.size > 1 && (
                   <select defaultValue="" onChange={e => { if (e.target.value) { bulkSetStatus(e.target.value as ItemStatus); e.currentTarget.value = '' } }}
-                    style={{ height: 32, fontSize: 12 }}>
+                    style={{ height: 32, fontSize: 12, background: 'rgba(128,128,128,0.2)', color: 'var(--accent-fg)', border: '1px solid rgba(128,128,128,0.3)' }}>
                     <option value="" disabled>Set status…</option>
                     <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
                   </select>
                 )}
                 <button className="btn" onClick={clearAudit}
-                  style={{ height: 32, padding: '0 12px', fontSize: 12 }}>
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(128,128,128,0.2)', color: 'var(--accent-fg)', borderColor: 'rgba(128,128,128,0.3)' }}>
                   Clear
                 </button>
                 {auditChecked.size > 1 && (
                   <button className="btn" onClick={bulkDelete}
-                    style={{ height: 32, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 12px', fontSize: 12 }}>
+                    style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(185,28,28,0.25)', color: '#f87171', borderColor: 'rgba(185,28,28,0.4)' }}>
                     Delete {auditChecked.size}
                   </button>
                 )}
