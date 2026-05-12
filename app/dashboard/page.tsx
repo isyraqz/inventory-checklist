@@ -1027,20 +1027,11 @@ export default function Dashboard() {
               )}
 
               {/* Panel footer */}
-              {panelEditMode ? (
-                <div className="panel-footer">
-                  <button className="btn" onClick={() => setPanelEditMode(false)}>Cancel</button>
-                  <button className="btn btn-primary" onClick={savePanelEdit} disabled={panelSaving}>
-                    {panelSaving ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
-              ) : role === 'admin' ? (
+              {role === 'admin' && (
                 <div className="panel-footer">
                   <button className="btn" style={{ color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)' }} onClick={() => deleteItem(selectedItem)}>Delete</button>
-                  <button className="btn" onClick={startPanelEdit}>Quick edit</button>
-                  <button className="btn btn-primary" onClick={() => openModal(selectedItem)}>Full edit</button>
                 </div>
-              ) : null}
+              )}
             </>
           )}
         </aside>
