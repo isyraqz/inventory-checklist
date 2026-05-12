@@ -853,117 +853,149 @@ export default function Dashboard() {
                 /* ── Read / inline-edit view ── */
                 <div className="panel-body">
 
-                  {/* Helper: inline text field */}
-                  {(() => {
-                    const F = role === 'admin'
+                  {/* reusable inline styles */}
+                  {/* editable span: dotted underline on hover, cursor text/pointer */}
 
-                    function FieldText({ field, value, mono }: { field: string; value: string | null; mono?: boolean }) {
-                      if (editingField === field) return (
-                        <input autoFocus type="text" value={editingValue}
+                  <div className="panel-section">
+                    <div className="panel-section-title">Status &amp; Condition</div>
+
+                    {/* Status */}
+                    <div className="detail-row"><span className="detail-key">Status</span>
+                      {editingField === 'status'
+                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('status', e.target.value) }} onBlur={() => setEditingField(null)}
+                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
+                            {['Available','In use','Maintenance'].map(o => <option key={o}>{o}</option>)}
+                          </select>
+                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('status', selectedItem.status)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
+                            <span className={`badge ${STATUS_CLASS[selectedItem.status] ?? ''}`}>{selectedItem.status}</span>
+                          </span>}
+                    </div>
+
+                    {/* Condition */}
+                    <div className="detail-row"><span className="detail-key">Condition</span>
+                      {editingField === 'condition'
+                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('condition', e.target.value) }} onBlur={() => setEditingField(null)}
+                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
+                            {['Good','Fair','Poor'].map(o => <option key={o}>{o}</option>)}
+                          </select>
+                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('condition', selectedItem.condition)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
+                            <span className={`badge ${COND_CLASS[selectedItem.condition] ?? ''}`}>{selectedItem.condition}</span>
+                          </span>}
+                    </div>
+
+                    {/* Assigned to */}
+                    <div className="detail-row"><span className="detail-key">Assigned to</span>
+                      {editingField === 'assigned_to'
+                        ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
+                            onBlur={() => saveField('assigned_to', editingValue)}
+                            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
+                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('assigned_to', selectedItem.assigned_to)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {selectedItem.assigned_to || '—'}
+                          </span>}
+                    </div>
+
+                    {/* Issue date */}
+                    <div className="detail-row"><span className="detail-key">Issue date</span>
+                      {editingField === 'date_acquired'
+                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('date_acquired', v) }} placeholder="DD-MM-YYYY" />
+                          </div>
+                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {fmtDate(selectedItem.date_acquired)}
+                          </span>}
+                    </div>
+                  </div>
+
+                  <div className="panel-section">
+                    <div className="panel-section-title">Classification</div>
+
+                    {/* Category */}
+                    <div className="detail-row"><span className="detail-key">Category</span>
+                      {editingField === 'category'
+                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('category', e.target.value) }} onBlur={() => setEditingField(null)}
+                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
+                            {['IT','Furniture','Equipment','Other'].map(o => <option key={o}>{o}</option>)}
+                          </select>
+                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('category', selectedItem.category)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
+                            {selectedItem.category}
+                          </span>}
+                    </div>
+
+                    {/* Department */}
+                    <div className="detail-row"><span className="detail-key">Department</span>
+                      {editingField === 'department'
+                        ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
+                            onBlur={() => saveField('department', editingValue)}
+                            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
+                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('department', selectedItem.department)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {selectedItem.department || '—'}
+                          </span>}
+                    </div>
+
+                    {/* Serial */}
+                    <div className="detail-row"><span className="detail-key">Serial No.</span>
+                      {editingField === 'serial'
+                        ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
+                            onBlur={() => saveField('serial', editingValue)}
+                            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                            style={{ fontSize: 12, fontFamily: 'var(--mono)', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px' }} />
+                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('serial', selectedItem.serial)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {selectedItem.serial || '—'}
+                          </span>}
+                    </div>
+                  </div>
+
+                  <div className="panel-section">
+                    <div className="panel-section-title">Dates</div>
+
+                    {/* Purchased date */}
+                    <div className="detail-row"><span className="detail-key">Purchased date</span>
+                      {editingField === 'purchased_date'
+                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('purchased_date', v) }} placeholder="DD-MM-YYYY" />
+                          </div>
+                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('purchased_date', selectedItem.purchased_date)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {fmtDate(selectedItem.purchased_date)}
+                          </span>}
+                    </div>
+
+                    {/* Warranty exp */}
+                    <div className="detail-row"><span className="detail-key">Warranty exp.</span>
+                      {editingField === 'warranty_exp'
+                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('warranty_exp', v) }} placeholder="DD-MM-YYYY" />
+                          </div>
+                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('warranty_exp', selectedItem.warranty_exp)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {fmtDate(selectedItem.warranty_exp)}
+                          </span>}
+                    </div>
+
+                    {/* Last checked */}
+                    <div className="detail-row"><span className="detail-key">Last checked</span>
+                      {editingField === 'last_checked'
+                        ? <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('last_checked', v) }} placeholder="DD-MM-YYYY" />
+                          </div>
+                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('last_checked', selectedItem.last_checked)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            {fmtDate(selectedItem.last_checked)}
+                          </span>}
+                    </div>
+                  </div>
+
+                  <div className="panel-section">
+                    <div className="panel-section-title">Remarks</div>
+                    {editingField === 'remarks'
+                      ? <textarea autoFocus value={editingValue} rows={3}
                           onChange={e => setEditingValue(e.target.value)}
-                          onBlur={() => saveField(field, editingValue)}
-                          onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
-                          style={{ fontSize: 12, fontFamily: mono ? 'var(--mono)' : 'var(--font)', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px' }} />
-                      )
-                      return <span className={`detail-val${mono ? ' mono' : ''}`} onClick={() => F && startEdit(field, value)}
-                        style={F ? { cursor: 'text', borderBottom: '1px dashed transparent' } : {}}
-                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border-strong)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}>
-                        {value || '—'}
-                      </span>
-                    }
-
-                    function FieldSelect({ field, value, options }: { field: string; value: string; options: string[] }) {
-                      if (editingField === field) return (
-                        <select autoFocus value={editingValue}
-                          onChange={e => { setEditingValue(e.target.value); saveField(field, e.target.value) }}
-                          onBlur={() => setEditingField(null)}
-                          style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font)' }}>
-                          {options.map(o => <option key={o}>{o}</option>)}
-                        </select>
-                      )
-                      return <span className="detail-val" onClick={() => F && startEdit(field, value)}
-                        style={F ? { cursor: 'pointer', borderBottom: '1px dashed transparent' } : {}}
-                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border-strong)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}>
-                        {field === 'status'
-                          ? <span className={`badge ${STATUS_CLASS[value] ?? ''}`}>{value}</span>
-                          : field === 'condition'
-                          ? <span className={`badge ${COND_CLASS[value] ?? ''}`}>{value}</span>
-                          : value || '—'}
-                      </span>
-                    }
-
-                    function FieldDate({ field, value }: { field: string; value: string | null }) {
-                      if (editingField === field) return (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField(field, v) }}
-                            placeholder="DD-MM-YYYY" />
-                        </div>
-                      )
-                      return <span className="detail-val mono" onClick={() => F && startEdit(field, value)}
-                        style={F ? { cursor: 'text', borderBottom: '1px dashed transparent' } : {}}
-                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border-strong)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}>
-                        {fmtDate(value)}
-                      </span>
-                    }
-
-                    function FieldTextarea({ field, value }: { field: string; value: string | null }) {
-                      if (editingField === field) return (
-                        <textarea autoFocus value={editingValue} rows={3}
-                          onChange={e => setEditingValue(e.target.value)}
-                          onBlur={() => saveField(field, editingValue)}
+                          onBlur={() => saveField('remarks', editingValue)}
                           onKeyDown={e => { if (e.key === 'Escape') setEditingField(null) }}
                           style={{ width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--accent)', outline: 'none', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', resize: 'vertical', marginTop: 4 }} />
-                      )
-                      return <p className="panel-remarks" onClick={() => F && startEdit(field, value)}
-                        style={F ? { cursor: 'text', borderRadius: 6, padding: '4px 6px', border: '1px dashed transparent', marginLeft: -6 } : {}}
-                        onMouseEnter={e => { if (F) (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'transparent' }}>
-                        {value || '—'}
-                      </p>
-                    }
-
-                    return <>
-                      <div className="panel-section">
-                        <div className="panel-section-title">Status &amp; Condition</div>
-                        <div className="detail-row"><span className="detail-key">Status</span>
-                          <FieldSelect field="status" value={selectedItem.status} options={['Available', 'In use', 'Maintenance']} /></div>
-                        <div className="detail-row"><span className="detail-key">Condition</span>
-                          <FieldSelect field="condition" value={selectedItem.condition} options={['Good', 'Fair', 'Poor']} /></div>
-                        <div className="detail-row"><span className="detail-key">Assigned to</span>
-                          <FieldText field="assigned_to" value={selectedItem.assigned_to} /></div>
-                        <div className="detail-row"><span className="detail-key">Issue date</span>
-                          <FieldDate field="date_acquired" value={selectedItem.date_acquired} /></div>
-                      </div>
-
-                      <div className="panel-section">
-                        <div className="panel-section-title">Classification</div>
-                        <div className="detail-row"><span className="detail-key">Category</span>
-                          <FieldSelect field="category" value={selectedItem.category} options={['IT', 'Furniture', 'Equipment', 'Other']} /></div>
-                        <div className="detail-row"><span className="detail-key">Department</span>
-                          <FieldText field="department" value={selectedItem.department} /></div>
-                        <div className="detail-row"><span className="detail-key">Serial No.</span>
-                          <FieldText field="serial" value={selectedItem.serial} mono /></div>
-                      </div>
-
-                      <div className="panel-section">
-                        <div className="panel-section-title">Dates</div>
-                        <div className="detail-row"><span className="detail-key">Purchased date</span>
-                          <FieldDate field="purchased_date" value={selectedItem.purchased_date} /></div>
-                        <div className="detail-row"><span className="detail-key">Warranty exp.</span>
-                          <FieldDate field="warranty_exp" value={selectedItem.warranty_exp} /></div>
-                        <div className="detail-row"><span className="detail-key">Last checked</span>
-                          <FieldDate field="last_checked" value={selectedItem.last_checked} /></div>
-                      </div>
-
-                      <div className="panel-section">
-                        <div className="panel-section-title">Remarks</div>
-                        <FieldTextarea field="remarks" value={selectedItem.remarks} />
-                      </div>
-                    </>
-                  })()}
+                      : <p className="panel-remarks" onClick={() => role === 'admin' && startEdit('remarks', selectedItem.remarks)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                          {selectedItem.remarks || '—'}
+                        </p>}
+                  </div>
 
                   {/* Photos */}
                   <div className="panel-section">
