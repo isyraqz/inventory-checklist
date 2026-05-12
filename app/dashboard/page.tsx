@@ -121,6 +121,9 @@ export default function Dashboard() {
   const [userHistory, setUserHistory] = useState<UserHistory[]>([])
   const [uhLoading, setUhLoading] = useState(false)
   const [uhForm, setUhForm] = useState({ user_name: '', date_from: '', date_to: '' })
+  const [uhAddOpen, setUhAddOpen] = useState(false)
+  const [editingUh, setEditingUh] = useState<string | null>(null)
+  const [uhEditForm, setUhEditForm] = useState({ user_name: '', date_from: '', date_to: '' })
   const [uhSaving, setUhSaving] = useState(false)
 
   // ── New UX state ──
@@ -337,8 +340,22 @@ export default function Dashboard() {
       item_id: selectedItem.id, user_name: uhForm.user_name.trim(),
       date_from: toDBDate(uhForm.date_from) || null, date_to: toDBDate(uhForm.date_to) || null,
     })
-    if (!error) { setUhForm({ user_name: '', date_from: '', date_to: '' }); await loadUserHistory(selectedItem.id); toast('User history added') }
+    if (!error) { setUhForm({ user_name: '', date_from: '', date_to: '' }); setUhAddOpen(false); await loadUserHistory(selectedItem.id); toast('User added') }
     setUhSaving(false)
+  }
+  async function saveUhEntry(id: string) {
+    if (!uhEditForm.user_name.trim() || !selectedItem) return
+    await supabase.from('item_user_history').update({
+      user_name: uhEditForm.user_name.trim(),
+      date_from: toDBDate(uhEditForm.date_from) || null,
+      date_to: toDBDate(uhEditForm.date_to) || null,
+    }).eq('id', id)
+    setEditingUh(null); await loadUserHistory(selectedItem.id); toast('User history updated')
+  }
+  async function deleteUhEntry(id: string) {
+    if (!confirm('Remove this user history entry?') || !selectedItem) return
+    await supabase.from('item_user_history').delete().eq('id', id)
+    setEditingUh(null); await loadUserHistory(selectedItem.id); toast('Entry removed')
   }
   async function addLog() {
     if (!logInput.trim() || !selectedItem || !userId) return
@@ -991,15 +1008,85 @@ export default function Dashboard() {
                   </div>
 
                   <div className="panel-section">
-                    <div className="panel-section-title">User History</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div className="panel-section-title" style={{ marginBottom: 0 }}>User History</div>
+                      {role === 'admin' && !uhAddOpen && (
+                        <button type="button" onClick={() => { setUhAddOpen(true); setEditingUh(null) }}
+                          style={{ fontSize: 11, background: 'none', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font)' }}>
+                          + Add
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Add form */}
+                    {uhAddOpen && role === 'admin' && (
+                      <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <input type="text" value={uhForm.user_name} placeholder="User name"
+                          onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
+                          style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                          <div>
+                            <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
+                            <DatePicker value={uhForm.date_from} onChange={v => setUhForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
+                            <DatePicker value={uhForm.date_to} onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => { setUhAddOpen(false); setUhForm({ user_name: '', date_from: '', date_to: '' }) }}
+                            className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                          <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()}
+                            className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
+                            {uhSaving ? 'Saving…' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {uhLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
                       : userHistory.length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet.</p>
                       : userHistory.map(h => (
-                        <div key={h.id} className="detail-row" style={{ alignItems: 'center' }}>
-                          <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>{h.user_name}</span>
-                          <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
-                            {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
-                          </span>
+                        <div key={h.id}>
+                          {editingUh === h.id ? (
+                            /* Edit form */
+                            <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <input type="text" value={uhEditForm.user_name} placeholder="User name"
+                                onChange={e => setUhEditForm(f => ({ ...f, user_name: e.target.value }))}
+                                style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                <div>
+                                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
+                                  <DatePicker value={uhEditForm.date_from} onChange={v => setUhEditForm(f => ({ ...f, date_from: v }))} placeholder="DD-MM-YYYY" />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
+                                  <DatePicker value={uhEditForm.date_to} onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button onClick={() => deleteUhEntry(h.id)}
+                                  className="btn" style={{ height: 32, fontSize: 12, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 10px' }}>Delete</button>
+                                <button onClick={() => setEditingUh(null)}
+                                  className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                                <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
+                                  className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Display row */
+                            <div className="detail-row" style={{ alignItems: 'center' }}
+                              onClick={() => { if (role === 'admin') { setEditingUh(h.id); setUhAddOpen(false); setUhEditForm({ user_name: h.user_name, date_from: toFormDate(h.date_from), date_to: toFormDate(h.date_to) }) } }}
+                              onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
+                              style={{ cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px' }}>
+                              <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>{h.user_name}</span>
+                              <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
+                                {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ))}
                   </div>
