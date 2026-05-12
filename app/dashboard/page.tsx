@@ -1375,13 +1375,19 @@ export default function Dashboard() {
                 <input type="text" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="e.g. IT, HR, Finance" /></div>
               <div className="form-field"><label>Assigned date</label>
                 <DatePicker value={form.date_acquired} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} />
-                {editId && (form.assigned_to || userHistory.some(h => !h.date_to)) && (
+              </div>
+              {editId && (
+                <div className="form-field full" style={{ marginTop: -6 }}>
                   <button type="button" onClick={endUsage}
-                    style={{ marginTop: 6, fontFamily: 'var(--font)', fontSize: 11, fontWeight: 500, padding: '5px 10px', borderRadius: 'var(--radius)', border: '1px solid rgba(185,28,28,0.35)', background: '#fce8e8', color: '#b91c1c', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                    style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 500, padding: '8px 16px', height: 36, borderRadius: 'var(--radius)', border: '1px solid rgba(185,28,28,0.35)', background: '#fce8e8', color: '#b91c1c', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content' }}>
+                    <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
+                      <path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 1.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM5.5 7.25h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1 0-1.5Z"/>
+                    </svg>
                     End Usage
                   </button>
-                )}
-              </div>
+                  <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 4 }}>Closes current assignment and clears assigned fields.</p>
+                </div>
+              )}
               <div className="form-field"><label>Purchased date</label>
                 <DatePicker value={form.purchased_date} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, purchased_date: v }))} /></div>
               <div className="form-field"><label>Warranty expiry</label>
