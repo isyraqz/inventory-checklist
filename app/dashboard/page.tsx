@@ -702,6 +702,10 @@ export default function Dashboard() {
                   <option value="" disabled>Set status…</option>
                   <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
                 </select>
+                <button className="btn" onClick={clearAudit}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12 }}>
+                  Clear
+                </button>
                 <button className="btn" onClick={bulkDelete}
                   style={{ height: 32, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 12px', fontSize: 12 }}>
                   Delete {auditChecked.size}
