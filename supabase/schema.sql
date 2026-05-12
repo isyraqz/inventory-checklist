@@ -44,3 +44,39 @@ create policy "Users manage their own item photos"
   for all
   using  (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- ── Maintenance logs ──
+create table public.maintenance_logs (
+  id          uuid default gen_random_uuid() primary key,
+  item_id     uuid references public.items(id) on delete cascade not null,
+  user_id     uuid references auth.users(id) not null,
+  logged_by   text not null default '',
+  description text not null,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.maintenance_logs enable row level security;
+
+create policy "Users manage their own maintenance logs"
+  on public.maintenance_logs
+  for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ── Item user history ──
+create table public.item_user_history (
+  id          uuid default gen_random_uuid() primary key,
+  item_id     uuid references public.items(id) on delete cascade not null,
+  user_name   text not null,
+  date_from   date,
+  date_to     date,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.item_user_history enable row level security;
+
+create policy "Authenticated users manage item user history"
+  on public.item_user_history
+  for all
+  using  (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
