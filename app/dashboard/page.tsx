@@ -687,8 +687,8 @@ export default function Dashboard() {
 
           {showCharts && <ChartPanel items={items} />}
 
-          {/* Bulk action bar — appears automatically when 2+ items are checked */}
-          {auditChecked.size > 1 && (
+          {/* Unified selection bar — appears from 1+ items checked, bulk actions appear at 2+ */}
+          {auditChecked.size > 0 && (
             <div className="bulk-bar">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <input type="checkbox"
@@ -697,33 +697,29 @@ export default function Dashboard() {
                 <span style={{ fontWeight: 500 }}>{auditChecked.size} item{auditChecked.size !== 1 ? 's' : ''} selected</span>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <select defaultValue="" onChange={e => { if (e.target.value) { bulkSetStatus(e.target.value as ItemStatus); e.currentTarget.value = '' } }}
-                  style={{ height: 32, fontSize: 12 }}>
-                  <option value="" disabled>Set status…</option>
-                  <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
-                </select>
+                {auditChecked.size > 1 && (
+                  <select defaultValue="" onChange={e => { if (e.target.value) { bulkSetStatus(e.target.value as ItemStatus); e.currentTarget.value = '' } }}
+                    style={{ height: 32, fontSize: 12 }}>
+                    <option value="" disabled>Set status…</option>
+                    <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
+                  </select>
+                )}
                 <button className="btn" onClick={clearAudit}
                   style={{ height: 32, padding: '0 12px', fontSize: 12 }}>
                   Clear
                 </button>
-                <button className="btn" onClick={bulkDelete}
-                  style={{ height: 32, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 12px', fontSize: 12 }}>
-                  Delete {auditChecked.size}
-                </button>
+                {auditChecked.size > 1 && (
+                  <button className="btn" onClick={bulkDelete}
+                    style={{ height: 32, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 12px', fontSize: 12 }}>
+                    Delete {auditChecked.size}
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          {/* Audit bar + Add button */}
+          {/* Add button row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
-            {role === 'admin' && checkedCount > 0 && auditChecked.size < 2 && (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--accent)', borderRadius: 'var(--radius)', padding: '10px 16px', fontSize: 13 }}>
-                <span style={{ color: 'var(--accent-fg)', fontWeight: 500 }}>✓ {checkedCount} item{checkedCount !== 1 ? 's' : ''} checked in for audit</span>
-                <button onClick={clearAudit} style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.15)', color: 'var(--accent-fg)', cursor: 'pointer' }}>
-                  Clear audit
-                </button>
-              </div>
-            )}
             {role === 'admin' && (
               <button className="btn btn-primary" onClick={() => openModal()} style={{ marginLeft: 'auto' }}>
                 <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
