@@ -1102,7 +1102,7 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
-                            <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined}
+                            <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined} maxDate={todayDMY()}
                               onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                           </div>
                         </div>
@@ -1138,7 +1138,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                   <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To (optional)</div>
-                                  <DatePicker value={uhEditForm.date_to} minDate={uhEditForm.date_from || undefined}
+                                  <DatePicker value={uhEditForm.date_to} minDate={uhEditForm.date_from || undefined} maxDate={todayDMY()}
                                     onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                                 </div>
                               </div>
@@ -1335,7 +1335,7 @@ export default function Dashboard() {
                             return { ...f, date_from: v, date_to: clearTo ? '' : f.date_to }
                           })} /></div>
                       <div><div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 4 }}>To (optional)</div>
-                        <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined}
+                        <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined} maxDate={todayDMY()}
                           onChange={v => setUhForm(f => ({ ...f, date_to: v }))} /></div>
                     </div>
                     <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()} className="btn btn-primary" style={{ justifyContent: 'center' }}>
