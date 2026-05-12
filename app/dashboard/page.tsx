@@ -1188,11 +1188,11 @@ export default function Dashboard() {
                                   </div>
                                 </div>
                               ) : (
-                                <div style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative' }}
+                                <div
                                   onClick={() => { if (role === 'admin') { setEditingLog(log.id); setLogAddOpen(false); setLogEditValue(log.description) } }}
                                   onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
                                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                                  style={{ cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px' }}>
+                                  style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px' }}>
                                   {i < logs.length - 1 && <div style={{ position: 'absolute', left: 11, top: 18, bottom: 0, width: 1, background: 'var(--border)' }} />}
                                   <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 5, zIndex: 1 }} />
                                   <div style={{ flex: 1 }}>
