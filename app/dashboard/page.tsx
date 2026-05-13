@@ -1364,7 +1364,7 @@ export default function Dashboard() {
                                   <button onClick={() => setEditingUh(null)}
                                     className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                                   <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
-                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Add</button>
+                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
                                 </div>
                               </div>
                             ) : (
@@ -1449,7 +1449,7 @@ export default function Dashboard() {
                                     <button onClick={() => setEditingLog(null)}
                                       className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                                     <button onClick={() => saveLogEntry(log.id)} disabled={!logEditValue.trim()}
-                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Add</button>
+                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
                                   </div>
                                 </div>
                               ) : (
