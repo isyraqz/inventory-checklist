@@ -159,6 +159,7 @@ export default function Dashboard() {
   const importInputRef = useRef<HTMLInputElement>(null)
   const snap = useRef({ selectedItem: null as Item | null, role: 'viewer' as 'admin' | 'viewer', modalOpen: false, importOpen: false, filtered: [] as Item[] })
   const assignedToWasBlank = useRef(false)
+  const pendingNewUserName = useRef('')
 
   // ── Data loading ──
   const loadItems = useCallback(async () => {
@@ -211,6 +212,7 @@ export default function Dashboard() {
   useEffect(() => {
     setDraft({}); setEditingField(null)
     setPendingPhotoDeletes(new Set()); setPhotoUploadedSinceOpen(false)
+    pendingNewUserName.current = ''; assignedToWasBlank.current = false
     setUhAddOpen(false); setEditingUh(null)
     setLogAddOpen(false); setEditingLog(null); setLogInput(''); setLogAddDate('')
     if (selectedItem) {
@@ -567,6 +569,10 @@ export default function Dashboard() {
     if (!selectedItem || !isDirty) return
     const name = draft.name ?? selectedItem.name
     if (!name.trim()) { toast('Item name is required'); return }
+    // Compulsory date when user is assigned
+    const effectiveAssigned = draft.assigned_to ?? selectedItem.assigned_to
+    const effectiveDate = 'date_acquired' in draft ? draft.date_acquired : toFormDate(selectedItem.date_acquired)
+    if (effectiveAssigned && !effectiveDate) { toast('Assigned Date is required when assigning a user'); return }
     setPanelSaving(true)
 
     // 1. Flush staged UH ops (deletes → edits → adds)
@@ -1059,10 +1065,20 @@ export default function Dashboard() {
                             onBlur={() => {
                               const newVal = editingValue.trim()
                               if (assignedToWasBlank.current && newVal) {
-                                // New assignment: set status to In use and auto-open date picker
+                                // New assignment: stage name + status, record pending, open date picker
                                 setDraft(d => ({ ...d, assigned_to: editingValue, status: 'In use' }))
                                 setEditingField(null)
+                                pendingNewUserName.current = newVal
                                 setTimeout(() => startEdit('date_acquired', selectedItem.date_acquired), 0)
+                              } else if (!assignedToWasBlank.current && newVal) {
+                                // Existing user renamed: commit and sync open UH entry
+                                commitToDraft('assigned_to', editingValue)
+                                const openEntry = userHistory.find(h => !h.date_to && h._staged !== 'delete')
+                                if (openEntry) {
+                                  setUserHistory(prev => prev.map(h => h.id === openEntry.id
+                                    ? { ...h, user_name: newVal, _staged: h._staged === 'add' ? 'add' : 'edit' as const }
+                                    : h))
+                                }
                               } else {
                                 commitToDraft('assigned_to', editingValue)
                               }
@@ -1083,7 +1099,38 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('date_acquired', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => {
+                              setEditingValue(v)
+                              if (v.length !== 10) return
+                              commitToDraft('date_acquired', v)
+                              const dateDB = toDBDate(v)
+                              if (pendingNewUserName.current) {
+                                // New user: create staged UH entry
+                                const newEntry: UserHistory = {
+                                  id: `draft-${Date.now()}`,
+                                  item_id: selectedItem.id,
+                                  user_id: userId ?? '',
+                                  user_name: pendingNewUserName.current,
+                                  date_from: dateDB,
+                                  date_to: null,
+                                  created_at: new Date().toISOString(),
+                                  _staged: 'add',
+                                }
+                                setUserHistory(prev => [newEntry, ...prev])
+                                pendingNewUserName.current = ''
+                              } else {
+                                // Existing user: sync date_from of open UH entry
+                                const effectiveAssigned = draft.assigned_to ?? selectedItem.assigned_to
+                                if (effectiveAssigned) {
+                                  const openEntry = userHistory.find(h => !h.date_to && h._staged !== 'delete')
+                                  if (openEntry) {
+                                    setUserHistory(prev => prev.map(h => h.id === openEntry.id
+                                      ? { ...h, date_from: dateDB, _staged: h._staged === 'add' ? 'add' : 'edit' as const }
+                                      : h))
+                                  }
+                                }
+                              }
+                            }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)} style={role === 'admin' ? { cursor: 'text' } : {}}>
                             {'date_acquired' in draft ? (draft.date_acquired || '—') : fmtDate(selectedItem.date_acquired)}
