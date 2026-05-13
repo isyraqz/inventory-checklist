@@ -8,7 +8,7 @@ import DatePicker from '@/components/DatePicker'
 import ChartPanel from '@/components/ChartPanel'
 
 const EMPTY_FORM: ItemFormData = {
-  name: '', brand: '', serial: '', status: 'Available', condition: 'Good',
+  name: '', brand: '', serial: '', status: 'In use', condition: 'Good',
   assigned_to: '', category: 'IT', department: '', date_acquired: '',
   purchased_date: '', warranty_exp: '', last_checked: '', remarks: '', checked: false,
 }
@@ -382,11 +382,11 @@ export default function Dashboard() {
       await supabase.from('item_user_history').update({ date_to: todayDB }).eq('id', openEntry[0].id)
     }
     // Clear assigned_to and date_acquired on item
-    await supabase.from('items').update({ assigned_to: null, date_acquired: null, updated_at: new Date().toISOString() }).eq('id', id)
+    await supabase.from('items').update({ assigned_to: null, date_acquired: null, status: 'Available', updated_at: new Date().toISOString() }).eq('id', id)
     setForm(f => ({ ...f, assigned_to: '', date_acquired: '' }))
     await loadItems()
     if (selectedItem?.id === id) {
-      setSelectedItem(prev => prev ? { ...prev, assigned_to: '', date_acquired: null } as Item : prev)
+      setSelectedItem(prev => prev ? { ...prev, assigned_to: '', date_acquired: null, status: 'Available' } as Item : prev)
       await loadUserHistory(id)
     }
     toast('Usage ended')
