@@ -985,7 +985,7 @@ export default function Dashboard() {
 
           {/* Keyboard shortcut hint */}
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 2px 0', fontSize: 11, color: 'var(--text-hint)' }}>
-            {[['↑↓', 'Navigate'], ['E', 'Edit'], ['Esc', 'Close']].map(([k, l]) => (
+            {[['↑↓', 'Navigate']].map(([k, l]) => (
               <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 5px', fontFamily: 'var(--mono)', fontSize: 10 }}>{k}</span>
                 {l}
