@@ -125,7 +125,6 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<MaintenanceLog[]>([])
   const [logsLoading, setLogsLoading] = useState(false)
   const [logInput, setLogInput] = useState('')
-  const [logSaving, setLogSaving] = useState(false)
   const [logAddOpen, setLogAddOpen] = useState(false)
   const [logAddDate, setLogAddDate] = useState('')
   const [editingLog, setEditingLog] = useState<string | null>(null)
@@ -137,11 +136,11 @@ export default function Dashboard() {
   const [uhAddOpen, setUhAddOpen] = useState(false)
   const [editingUh, setEditingUh] = useState<string | null>(null)
   const [uhEditForm, setUhEditForm] = useState({ user_name: '', date_from: '', date_to: '' })
-  const [uhSaving, setUhSaving] = useState(false)
 
   // ── Panel draft state ──
   const [draft, setDraft] = useState<Record<string, string>>({})
-  const isDirty = Object.keys(draft).length > 0
+  const [pendingPhotoDeletes, setPendingPhotoDeletes] = useState<Set<string>>(new Set())
+  const [photoUploadedSinceOpen, setPhotoUploadedSinceOpen] = useState(false)
   const [panelSaving, setPanelSaving] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<Partial<ItemFormData>[]>([])
@@ -158,7 +157,6 @@ export default function Dashboard() {
 
   const toastId = useRef(0)
   const importInputRef = useRef<HTMLInputElement>(null)
-  // Ref snapshot for keyboard handler (avoids stale closures)
   const snap = useRef({ selectedItem: null as Item | null, role: 'viewer' as 'admin' | 'viewer', modalOpen: false, importOpen: false, filtered: [] as Item[] })
 
   // ── Data loading ──
@@ -211,8 +209,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     setDraft({}); setEditingField(null)
+    setPendingPhotoDeletes(new Set()); setPhotoUploadedSinceOpen(false)
+    setUhAddOpen(false); setEditingUh(null)
+    setLogAddOpen(false); setEditingLog(null); setLogInput(''); setLogAddDate('')
     if (selectedItem) {
-      setLogInput(''); setLogAddDate(''); setLogAddOpen(false); setEditingLog(null); setLogEditDate('')
       setUhForm({ user_name: '', date_from: '', date_to: '' })
       loadLogs(selectedItem.id); loadUserHistory(selectedItem.id); loadPhotos(selectedItem.id)
     } else {
@@ -438,50 +438,77 @@ export default function Dashboard() {
     setAuditChecked(new Set()); toast('Audit cleared')
   }
 
-  // ── History / Log ──
-  async function addUserHistory() {
+  // ── History / Log — all mutations staged locally, flushed on panel Save ──
+  function addUserHistory() {
     if (!uhForm.user_name.trim() || !selectedItem) return
-    setUhSaving(true)
-    const { error } = await supabase.from('item_user_history').insert({
-      item_id: selectedItem.id, user_name: uhForm.user_name.trim(),
-      date_from: toDBDate(uhForm.date_from) || null, date_to: toDBDate(uhForm.date_to) || null,
-    })
-    if (!error) { setUhForm({ user_name: '', date_from: '', date_to: '' }); setUhAddOpen(false); await loadUserHistory(selectedItem.id); toast('User added') }
-    setUhSaving(false)
+    const isOpen = !uhForm.date_to
+    const entry: UserHistory = {
+      id: `draft-${Date.now()}`,
+      item_id: selectedItem.id,
+      user_name: uhForm.user_name.trim(),
+      date_from: toDBDate(uhForm.date_from) || null,
+      date_to: toDBDate(uhForm.date_to) || null,
+      created_at: new Date().toISOString(),
+      _staged: 'add',
+    }
+    setUserHistory(prev => [entry, ...prev])
+    // Auto-set status to In use when adding an open (current) entry
+    if (isOpen) setDraft(d => ({ ...d, status: 'In use' }))
+    setUhForm({ user_name: '', date_from: '', date_to: '' })
+    setUhAddOpen(false)
   }
-  async function saveUhEntry(id: string) {
-    if (!uhEditForm.user_name.trim() || !selectedItem) return
-    await supabase.from('item_user_history').update({
+  function saveUhEntry(id: string) {
+    if (!uhEditForm.user_name.trim()) return
+    setUserHistory(prev => prev.map(h => h.id === id ? {
+      ...h,
       user_name: uhEditForm.user_name.trim(),
       date_from: toDBDate(uhEditForm.date_from) || null,
       date_to: toDBDate(uhEditForm.date_to) || null,
-    }).eq('id', id)
-    setEditingUh(null); await loadUserHistory(selectedItem.id); toast('User history updated')
+      _staged: h._staged === 'add' ? 'add' : 'edit',
+    } : h))
+    setEditingUh(null)
   }
-  async function deleteUhEntry(id: string) {
-    if (!confirm('Remove this user history entry?') || !selectedItem) return
-    await supabase.from('item_user_history').delete().eq('id', id)
-    setEditingUh(null); await loadUserHistory(selectedItem.id); toast('Entry removed')
-  }
-  async function addLog() {
-    if (!logInput.trim() || !selectedItem || !userId) return
-    setLogSaving(true)
-    const { error } = await supabase.from('maintenance_logs').insert({
-      item_id: selectedItem.id, user_id: userId, logged_by: userEmail, description: logInput.trim(),
-      log_date: toDBDate(logAddDate) || null,
+  function deleteUhEntry(id: string) {
+    setUserHistory(prev => {
+      const entry = prev.find(h => h.id === id)
+      // Staged-add entries were never in DB — just remove from local list
+      if (entry?._staged === 'add') return prev.filter(h => h.id !== id)
+      return prev.map(h => h.id === id ? { ...h, _staged: 'delete' as const } : h)
     })
-    if (error) { toast('Error: ' + error.message) } else { setLogInput(''); setLogAddDate(''); setLogAddOpen(false); await loadLogs(selectedItem.id); toast('Log added') }
-    setLogSaving(false)
+    setEditingUh(null)
   }
-  async function saveLogEntry(id: string) {
-    if (!logEditValue.trim() || !selectedItem) return
-    await supabase.from('maintenance_logs').update({ description: logEditValue.trim(), log_date: toDBDate(logEditDate) || null }).eq('id', id)
-    setEditingLog(null); await loadLogs(selectedItem.id); toast('Log updated')
+  function addLog() {
+    if (!logInput.trim() || !selectedItem || !userId) return
+    const entry: MaintenanceLog = {
+      id: `draft-${Date.now()}`,
+      item_id: selectedItem.id,
+      user_id: userId,
+      logged_by: userEmail,
+      description: logInput.trim(),
+      log_date: toDBDate(logAddDate) || null,
+      created_at: new Date().toISOString(),
+      _staged: 'add',
+    }
+    setLogs(prev => [entry, ...prev])
+    setLogInput(''); setLogAddDate(''); setLogAddOpen(false)
   }
-  async function deleteLogEntry(id: string) {
-    if (!confirm('Delete this log entry?') || !selectedItem) return
-    await supabase.from('maintenance_logs').delete().eq('id', id)
-    setEditingLog(null); await loadLogs(selectedItem.id); toast('Log deleted')
+  function saveLogEntry(id: string) {
+    if (!logEditValue.trim()) return
+    setLogs(prev => prev.map(l => l.id === id ? {
+      ...l,
+      description: logEditValue.trim(),
+      log_date: toDBDate(logEditDate) || null,
+      _staged: l._staged === 'add' ? 'add' : 'edit',
+    } : l))
+    setEditingLog(null)
+  }
+  function deleteLogEntry(id: string) {
+    setLogs(prev => {
+      const entry = prev.find(l => l.id === id)
+      if (entry?._staged === 'add') return prev.filter(l => l.id !== id)
+      return prev.map(l => l.id === id ? { ...l, _staged: 'delete' as const } : l)
+    })
+    setEditingLog(null)
   }
 
   async function deleteItem(item: Item) {
@@ -506,14 +533,13 @@ export default function Dashboard() {
     const { data: { publicUrl } } = supabase.storage.from('item-photos').getPublicUrl(path)
     await supabase.from('item_photos').insert({ item_id: selectedItem.id, user_id: user.id, storage_path: path, url: publicUrl })
     await loadPhotos(selectedItem.id)
-    setPhotoUploading(false); toast('Photo uploaded')
+    setPhotoUploading(false)
+    setPhotoUploadedSinceOpen(true)
+    toast('Photo uploaded')
   }
-  async function deletePhoto(photo: ItemPhoto) {
-    if (!confirm('Delete this photo?')) return
-    await supabase.storage.from('item-photos').remove([photo.storage_path])
-    await supabase.from('item_photos').delete().eq('id', photo.id)
-    setPhotos(prev => prev.filter(p => p.id !== photo.id))
-    toast('Photo deleted')
+  function deletePhoto(photo: ItemPhoto) {
+    // Stage deletion — actual storage/DB removal happens on panel Save
+    setPendingPhotoDeletes(prev => new Set([...prev, photo.id]))
   }
 
   const DATE_FIELDS = new Set(['date_acquired', 'purchased_date', 'warranty_exp', 'last_checked'])
@@ -537,6 +563,48 @@ export default function Dashboard() {
     const name = draft.name ?? selectedItem.name
     if (!name.trim()) { toast('Item name is required'); return }
     setPanelSaving(true)
+
+    // 1. Flush staged UH ops (deletes → edits → adds)
+    for (const h of userHistory.filter(h => h._staged === 'delete' && !h.id.startsWith('draft-'))) {
+      await supabase.from('item_user_history').delete().eq('id', h.id)
+    }
+    for (const h of userHistory.filter(h => h._staged === 'edit')) {
+      await supabase.from('item_user_history').update({
+        user_name: h.user_name, date_from: h.date_from, date_to: h.date_to,
+      }).eq('id', h.id)
+    }
+    for (const h of userHistory.filter(h => h._staged === 'add')) {
+      await supabase.from('item_user_history').insert({
+        item_id: selectedItem.id, user_name: h.user_name, date_from: h.date_from, date_to: h.date_to,
+      })
+    }
+
+    // 2. Flush staged log ops (deletes → edits → adds)
+    for (const l of logs.filter(l => l._staged === 'delete' && !l.id.startsWith('draft-'))) {
+      await supabase.from('maintenance_logs').delete().eq('id', l.id)
+    }
+    for (const l of logs.filter(l => l._staged === 'edit')) {
+      await supabase.from('maintenance_logs').update({
+        description: l.description, log_date: l.log_date,
+      }).eq('id', l.id)
+    }
+    for (const l of logs.filter(l => l._staged === 'add')) {
+      await supabase.from('maintenance_logs').insert({
+        item_id: selectedItem.id, user_id: userId!, logged_by: userEmail,
+        description: l.description, log_date: l.log_date,
+      })
+    }
+
+    // 3. Flush staged photo deletions
+    for (const photoId of pendingPhotoDeletes) {
+      const photo = photos.find(p => p.id === photoId)
+      if (photo) {
+        await supabase.storage.from('item-photos').remove([photo.storage_path])
+        await supabase.from('item_photos').delete().eq('id', photoId)
+      }
+    }
+
+    // 4. Flush item field draft
     const payload: Record<string, unknown> = {
       name,
       brand: draft.brand ?? selectedItem.brand ?? '',
@@ -554,15 +622,21 @@ export default function Dashboard() {
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('items').update(payload).eq('id', selectedItem.id)
-    if (!error) {
-      toast('Saved')
-      const updated = { ...selectedItem, ...payload } as Item
-      setSelectedItem(updated)
-      setItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...payload } : i))
-      setDraft({})
-    } else {
-      toast('Error: ' + error.message)
-    }
+    if (error) { toast('Error: ' + error.message); setPanelSaving(false); return }
+
+    // 5. Reload and clear all staged state
+    const updated = { ...selectedItem, ...payload } as Item
+    setSelectedItem(updated)
+    setItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...payload } : i))
+    setDraft({})
+    setPendingPhotoDeletes(new Set())
+    setPhotoUploadedSinceOpen(false)
+    await Promise.all([
+      loadUserHistory(selectedItem.id),
+      loadLogs(selectedItem.id),
+      loadPhotos(selectedItem.id),
+    ])
+    toast('Saved')
     setPanelSaving(false)
   }
 
@@ -657,6 +731,13 @@ export default function Dashboard() {
 
   // Keep snap updated for keyboard handler
   snap.current = { selectedItem, role, modalOpen, importOpen, filtered }
+
+  const isDirty =
+    Object.keys(draft).length > 0 ||
+    userHistory.some(h => h._staged) ||
+    logs.some(l => l._staged) ||
+    pendingPhotoDeletes.size > 0 ||
+    photoUploadedSinceOpen
 
   const retiredCount = items.filter(i => i.status === 'Retired').length
   const total = items.filter(i => i.status !== 'Retired').length
@@ -1112,11 +1193,11 @@ export default function Dashboard() {
                     </div>
                     {photosLoading ? (
                       <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
-                    ) : photos.length === 0 ? (
+                    ) : photos.filter(p => !pendingPhotoDeletes.has(p.id)).length === 0 ? (
                       <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No photos yet.</p>
                     ) : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-                        {photos.map(photo => (
+                        {photos.filter(p => !pendingPhotoDeletes.has(p.id)).map(photo => (
                           <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: '1px solid var(--border)' }}
                             onClick={() => setLightbox(photo.url)}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1171,21 +1252,21 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => { setUhAddOpen(false); setUhForm({ user_name: '', date_from: '', date_to: '' }) }}
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
-                          <button onClick={addUserHistory} disabled={uhSaving || !uhForm.user_name.trim()}
+                          <button onClick={addUserHistory} disabled={!uhForm.user_name.trim()}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
-                            {uhSaving ? 'Saving…' : 'Save'}
+                            Stage
                           </button>
                         </div>
                       </div>
                     )}
 
                     {uhLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
-                      : userHistory.length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet.</p>
-                      : userHistory.map((h, idx) => {
+                      : userHistory.filter(h => h._staged !== 'delete').length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet.</p>
+                      : userHistory.filter(h => h._staged !== 'delete').map((h, idx, visible) => {
                         const isOpen = !h.date_to
-                        // maxDate for this entry's date_to = date_from of the next newer entry (idx-1)
-                        const newerEntry = idx > 0 ? userHistory[idx - 1] : null
+                        const newerEntry = idx > 0 ? visible[idx - 1] : null
                         const overlapMax = newerEntry ? toFormDate(newerEntry.date_from) : todayDMY()
+                        const isEditable = !isOpen && role === 'admin'
                         return (
                           <div key={h.id}>
                             {editingUh === h.id && !isOpen ? (
@@ -1215,24 +1296,25 @@ export default function Dashboard() {
                                   <button onClick={() => setEditingUh(null)}
                                     className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                                   <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
-                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Stage</button>
                                 </div>
                               </div>
                             ) : (
                               /* Display row */
                               <div className="detail-row"
                                 onClick={() => {
-                                  if (!isOpen && role === 'admin') {
+                                  if (isEditable) {
                                     setEditingUh(h.id); setUhAddOpen(false)
                                     setUhEditForm({ user_name: h.user_name, date_from: toFormDate(h.date_from), date_to: toFormDate(h.date_to) })
                                   }
                                 }}
-                                onMouseEnter={e => { if (!isOpen && role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
+                                onMouseEnter={e => { if (isEditable) (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
                                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                                style={{ alignItems: 'center', cursor: (!isOpen && role === 'admin') ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px' }}>
+                                style={{ alignItems: 'center', cursor: isEditable ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px', opacity: h._staged ? 0.75 : 1 }}>
                                 <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>
                                   {h.user_name}
                                   {isOpen && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#276b3a', background: '#e6f4ea', padding: '1px 5px', borderRadius: 99 }}>current</span>}
+                                  {h._staged && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#92400e', background: '#fef3c7', padding: '1px 5px', borderRadius: 99 }}>unsaved</span>}
                                 </span>
                                 <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
                                   {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
@@ -1268,18 +1350,18 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => { setLogAddOpen(false); setLogInput(''); setLogAddDate('') }}
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
-                          <button onClick={addLog} disabled={logSaving || !logInput.trim() || !userId}
+                          <button onClick={addLog} disabled={!logInput.trim() || !userId}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
-                            {logSaving ? 'Saving…' : 'Save'}
+                            Stage
                           </button>
                         </div>
                       </div>
                     )}
 
                     {logsLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
-                      : logs.length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
+                      : logs.filter(l => l._staged !== 'delete').length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
                       : <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                          {logs.map((log, i) => (
+                          {logs.filter(l => l._staged !== 'delete').map((log, i, visible) => (
                             <div key={log.id}>
                               {editingLog === log.id ? (
                                 <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1299,7 +1381,7 @@ export default function Dashboard() {
                                     <button onClick={() => setEditingLog(null)}
                                       className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                                     <button onClick={() => saveLogEntry(log.id)} disabled={!logEditValue.trim()}
-                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Stage</button>
                                   </div>
                                 </div>
                               ) : (
@@ -1307,13 +1389,14 @@ export default function Dashboard() {
                                   onClick={() => { if (role === 'admin') { setEditingLog(log.id); setLogAddOpen(false); setLogEditValue(log.description); setLogEditDate(toFormDate(log.log_date)) } }}
                                   onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
                                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                                  style={{ display: 'flex', gap: 10, paddingBottom: 12, position: 'relative', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px' }}>
-                                  {i < logs.length - 1 && <div style={{ position: 'absolute', left: 11, top: 18, bottom: 0, width: 1, background: 'var(--border)' }} />}
-                                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 5, zIndex: 1 }} />
-                                  <div style={{ flex: 1 }}>
+                                  style={{ display: 'flex', gap: 10, position: 'relative', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px', opacity: log._staged ? 0.75 : 1 }}>
+                                  {i < visible.length - 1 && <div style={{ position: 'absolute', left: 11, top: 18, bottom: 0, width: 1, background: 'var(--border)' }} />}
+                                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: log._staged ? '#d97706' : 'var(--accent)', flexShrink: 0, marginTop: 5, zIndex: 1 }} />
+                                  <div style={{ flex: 1, paddingBottom: 12 }}>
                                     <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
                                     <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
                                       {log.log_date ? fmtDate(log.log_date) : new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
+                                      {log._staged && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#92400e', background: '#fef3c7', padding: '1px 5px', borderRadius: 99 }}>unsaved</span>}
                                     </p>
                                   </div>
                                 </div>
@@ -1450,7 +1533,7 @@ export default function Dashboard() {
                     <input type="text" value={logInput} onChange={e => setLogInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLog()}
                       placeholder="Add a log entry…"
                       style={{ flex: 1, fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                    <button onClick={addLog} disabled={logSaving || !logInput.trim()} className="btn btn-primary">{logSaving ? '…' : 'Add log'}</button>
+                    <button onClick={addLog} disabled={!logInput.trim()} className="btn btn-primary">Add log</button>
                   </div>
                 </div>
               </div>

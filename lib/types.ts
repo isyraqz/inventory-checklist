@@ -8,6 +8,7 @@ export interface MaintenanceLog {
   description: string
   log_date: string | null
   created_at: string
+  _staged?: 'add' | 'edit' | 'delete'
 }
 export type Condition = 'Good' | 'Fair' | 'Poor'
 export type ItemStatus = 'Available' | 'In use' | 'Maintenance' | 'Retired'
@@ -69,4 +70,5 @@ export interface UserHistory {
   date_from: string | null
   date_to: string | null
   created_at: string
+  _staged?: 'add' | 'edit' | 'delete'
 }
