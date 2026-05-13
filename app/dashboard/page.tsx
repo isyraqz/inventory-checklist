@@ -1254,7 +1254,7 @@ export default function Dashboard() {
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                           <button onClick={addUserHistory} disabled={!uhForm.user_name.trim()}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
-                            Stage
+                            Add
                           </button>
                         </div>
                       </div>
@@ -1296,7 +1296,7 @@ export default function Dashboard() {
                                   <button onClick={() => setEditingUh(null)}
                                     className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                                   <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
-                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Stage</button>
+                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Add</button>
                                 </div>
                               </div>
                             ) : (
@@ -1352,7 +1352,7 @@ export default function Dashboard() {
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                           <button onClick={addLog} disabled={!logInput.trim() || !userId}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
-                            Stage
+                            Add
                           </button>
                         </div>
                       </div>
@@ -1381,7 +1381,7 @@ export default function Dashboard() {
                                     <button onClick={() => setEditingLog(null)}
                                       className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
                                     <button onClick={() => saveLogEntry(log.id)} disabled={!logEditValue.trim()}
-                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Stage</button>
+                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Add</button>
                                   </div>
                                 </div>
                               ) : (
