@@ -900,14 +900,12 @@ export default function Dashboard() {
                 )}
                 <button className="btn" onClick={clearAudit}
                   style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(128,128,128,0.2)', color: 'var(--accent-fg)', borderColor: 'rgba(128,128,128,0.3)' }}>
-                  Clear
+                  Clear Selection
                 </button>
-                {auditChecked.size > 1 && (
-                  <button className="btn" onClick={bulkDelete}
-                    style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(185,28,28,0.25)', color: '#f87171', borderColor: 'rgba(185,28,28,0.4)' }}>
-                    Delete {auditChecked.size}
-                  </button>
-                )}
+                <button className="btn" onClick={bulkDelete}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(185,28,28,0.25)', color: '#f87171', borderColor: 'rgba(185,28,28,0.4)' }}>
+                  Delete {auditChecked.size}
+                </button>
               </div>
             </div>
           )}
@@ -1429,7 +1427,11 @@ export default function Dashboard() {
                     {logsLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
                       : logs.filter(l => l._staged !== 'delete').length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
                       : <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                          {logs.filter(l => l._staged !== 'delete').map((log, i, visible) => (
+                          {logs.filter(l => l._staged !== 'delete').slice().sort((a, b) => {
+                            const da = a.log_date || a.created_at || ''
+                            const db = b.log_date || b.created_at || ''
+                            return db.localeCompare(da)
+                          }).map((log, i, visible) => (
                             <div key={log.id}>
                               {editingLog === log.id ? (
                                 <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
