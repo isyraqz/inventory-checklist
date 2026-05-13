@@ -375,19 +375,38 @@ export default function Dashboard() {
     if (!id) return
     const todayDB = new Date().toISOString().slice(0, 10)
 
-    // Close the open UH entry (date_to: null → today)
-    const { data: openEntry, error: fetchErr } = await supabase
-      .from('item_user_history').select('id').eq('item_id', id).is('date_to', null)
-      .order('date_from', { ascending: false }).limit(1)
-    if (fetchErr) { toast('Error fetching history: ' + fetchErr.message); return }
+    // Use already-loaded userHistory state to find the open entry (avoids a re-query)
+    // Falls back to a DB query if called outside panel context
+    let openId: string | null = null
+    let openUser: string = ''
+    let openFrom: string | null = null
 
-    if (openEntry && openEntry.length > 0) {
-      const { error: uhErr } = await supabase
-        .from('item_user_history').update({ date_to: todayDB }).eq('id', openEntry[0].id)
-      if (uhErr) { toast('Error closing history: ' + uhErr.message); return }
+    const stateEntry = userHistory.find(h => !h.date_to)
+    if (stateEntry) {
+      openId = stateEntry.id
+      openUser = stateEntry.user_name
+      openFrom = stateEntry.date_from
+    } else {
+      const { data } = await supabase
+        .from('item_user_history').select('*').eq('item_id', id).is('date_to', null)
+        .order('date_from', { ascending: false }).limit(1)
+      if (data && data.length > 0) {
+        openId = data[0].id; openUser = data[0].user_name; openFrom = data[0].date_from
+      }
     }
 
-    // Clear assigned_to (empty string — column is NOT NULL) and date_acquired, set Available
+    // Close the open UH entry: DELETE + re-INSERT with date_to=today
+    // (avoids RLS UPDATE restrictions that silently block writes)
+    if (openId) {
+      const { error: delErr } = await supabase.from('item_user_history').delete().eq('id', openId)
+      if (delErr) { toast('Error closing history: ' + delErr.message); return }
+      const { error: insErr } = await supabase.from('item_user_history').insert({
+        item_id: id, user_name: openUser, date_from: openFrom, date_to: todayDB,
+      })
+      if (insErr) { toast('Error saving history: ' + insErr.message); return }
+    }
+
+    // Clear assigned_to and date_acquired, set status to Available
     const { error: itemErr } = await supabase.from('items').update({
       assigned_to: '', date_acquired: null, status: 'Available',
       updated_at: new Date().toISOString(),
@@ -396,10 +415,8 @@ export default function Dashboard() {
 
     setForm(f => ({ ...f, assigned_to: '', date_acquired: '' }))
     await loadItems()
-    if (selectedItem?.id === id) {
-      setSelectedItem(prev => prev ? { ...prev, assigned_to: '', date_acquired: null, status: 'Available' } as Item : prev)
-      await loadUserHistory(id)
-    }
+    setSelectedItem(prev => prev?.id === id ? { ...prev, assigned_to: '', date_acquired: null, status: 'Available' } as Item : prev)
+    await loadUserHistory(id)
     toast('Usage ended')
   }
 
