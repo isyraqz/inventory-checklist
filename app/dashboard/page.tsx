@@ -1318,7 +1318,7 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button onClick={() => { setUhAddOpen(false); setUhForm({ user_name: '', date_from: '', date_to: '' }) }}
                             className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
-                          <button onClick={addUserHistory} disabled={!uhForm.user_name.trim()}
+                          <button onClick={addUserHistory} disabled={!uhForm.user_name.trim() || !uhForm.date_from || !uhForm.date_to}
                             className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
                             Add
                           </button>
