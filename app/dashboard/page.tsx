@@ -1109,7 +1109,6 @@ export default function Dashboard() {
                                 const newEntry: UserHistory = {
                                   id: `draft-${Date.now()}`,
                                   item_id: selectedItem.id,
-                                  user_id: userId ?? '',
                                   user_name: pendingNewUserName.current,
                                   date_from: dateDB,
                                   date_to: null,
