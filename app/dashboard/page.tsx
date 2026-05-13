@@ -158,6 +158,7 @@ export default function Dashboard() {
   const toastId = useRef(0)
   const importInputRef = useRef<HTMLInputElement>(null)
   const snap = useRef({ selectedItem: null as Item | null, role: 'viewer' as 'admin' | 'viewer', modalOpen: false, importOpen: false, filtered: [] as Item[] })
+  const assignedToWasBlank = useRef(false)
 
   // ── Data loading ──
   const loadItems = useCallback(async () => {
@@ -552,6 +553,10 @@ export default function Dashboard() {
 
   function startEdit(field: string, current: string | null) {
     if (role !== 'admin') return
+    if (field === 'assigned_to') {
+      const effective = draft.assigned_to ?? selectedItem?.assigned_to ?? ''
+      assignedToWasBlank.current = !effective.trim()
+    }
     setEditingField(field)
     // Prefer already-staged draft value, fall back to item value
     const staged = draft[field]
@@ -1051,12 +1056,27 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Assigned to</span>
                       {editingField === 'assigned_to'
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
-                            onBlur={() => commitToDraft('assigned_to', editingValue)}
+                            onBlur={() => {
+                              const newVal = editingValue.trim()
+                              if (assignedToWasBlank.current && newVal) {
+                                // New assignment: set status to In use and auto-open date picker
+                                setDraft(d => ({ ...d, assigned_to: editingValue, status: 'In use' }))
+                                setEditingField(null)
+                                setTimeout(() => startEdit('date_acquired', selectedItem.date_acquired), 0)
+                              } else {
+                                commitToDraft('assigned_to', editingValue)
+                              }
+                            }}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
-                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('assigned_to', selectedItem.assigned_to)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {(draft.assigned_to ?? selectedItem.assigned_to) || '—'}
-                          </span>}
+                        : (() => {
+                            const effectiveAssigned = draft.assigned_to ?? selectedItem.assigned_to
+                            return effectiveAssigned
+                              ? <span className="detail-val" onClick={() => role === 'admin' && startEdit('assigned_to', selectedItem.assigned_to)} style={role === 'admin' ? { cursor: 'text' } : {}}>{effectiveAssigned}</span>
+                              : role === 'admin'
+                                ? <span onClick={() => startEdit('assigned_to', '')} style={{ fontSize: 12, color: 'var(--accent)', cursor: 'pointer', fontWeight: 500 }}>＋ Add new user</span>
+                                : <span className="detail-val">—</span>
+                          })()}
                     </div>
 
                     {/* Assigned date */}
