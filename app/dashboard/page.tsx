@@ -374,15 +374,26 @@ export default function Dashboard() {
     const id = itemId ?? editId
     if (!id) return
     const todayDB = new Date().toISOString().slice(0, 10)
-    // Close the open UH entry
-    const { data: openEntry } = await supabase.from('item_user_history')
-      .select('id').eq('item_id', id).is('date_to', null)
+
+    // Close the open UH entry (date_to: null → today)
+    const { data: openEntry, error: fetchErr } = await supabase
+      .from('item_user_history').select('id').eq('item_id', id).is('date_to', null)
       .order('date_from', { ascending: false }).limit(1)
+    if (fetchErr) { toast('Error fetching history: ' + fetchErr.message); return }
+
     if (openEntry && openEntry.length > 0) {
-      await supabase.from('item_user_history').update({ date_to: todayDB }).eq('id', openEntry[0].id)
+      const { error: uhErr } = await supabase
+        .from('item_user_history').update({ date_to: todayDB }).eq('id', openEntry[0].id)
+      if (uhErr) { toast('Error closing history: ' + uhErr.message); return }
     }
-    // Clear assigned_to and date_acquired on item
-    await supabase.from('items').update({ assigned_to: null, date_acquired: null, status: 'Available', updated_at: new Date().toISOString() }).eq('id', id)
+
+    // Clear assigned_to (empty string — column is NOT NULL) and date_acquired, set Available
+    const { error: itemErr } = await supabase.from('items').update({
+      assigned_to: '', date_acquired: null, status: 'Available',
+      updated_at: new Date().toISOString(),
+    }).eq('id', id)
+    if (itemErr) { toast('Error updating item: ' + itemErr.message); return }
+
     setForm(f => ({ ...f, assigned_to: '', date_acquired: '' }))
     await loadItems()
     if (selectedItem?.id === id) {
