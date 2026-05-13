@@ -580,9 +580,11 @@ export default function Dashboard() {
       await supabase.from('item_user_history').delete().eq('id', h.id)
     }
     for (const h of userHistory.filter(h => h._staged === 'edit')) {
-      await supabase.from('item_user_history').update({
-        user_name: h.user_name, date_from: h.date_from, date_to: h.date_to,
-      }).eq('id', h.id)
+      // RLS blocks UPDATE on item_user_history — use DELETE + INSERT instead
+      await supabase.from('item_user_history').delete().eq('id', h.id)
+      await supabase.from('item_user_history').insert({
+        item_id: selectedItem.id, user_name: h.user_name, date_from: h.date_from, date_to: h.date_to,
+      })
     }
     for (const h of userHistory.filter(h => h._staged === 'add')) {
       await supabase.from('item_user_history').insert({
