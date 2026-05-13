@@ -139,9 +139,9 @@ export default function Dashboard() {
   const [uhEditForm, setUhEditForm] = useState({ user_name: '', date_from: '', date_to: '' })
   const [uhSaving, setUhSaving] = useState(false)
 
-  // ── New UX state ──
-  const [panelEditMode, setPanelEditMode] = useState(false)
-  const [panelForm, setPanelForm] = useState<Partial<ItemFormData>>({})
+  // ── Panel draft state ──
+  const [draft, setDraft] = useState<Record<string, string>>({})
+  const isDirty = Object.keys(draft).length > 0
   const [panelSaving, setPanelSaving] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<Partial<ItemFormData>[]>([])
@@ -159,7 +159,7 @@ export default function Dashboard() {
   const toastId = useRef(0)
   const importInputRef = useRef<HTMLInputElement>(null)
   // Ref snapshot for keyboard handler (avoids stale closures)
-  const snap = useRef({ selectedItem: null as Item | null, role: 'viewer' as 'admin' | 'viewer', modalOpen: false, importOpen: false, panelEditMode: false, filtered: [] as Item[] })
+  const snap = useRef({ selectedItem: null as Item | null, role: 'viewer' as 'admin' | 'viewer', modalOpen: false, importOpen: false, filtered: [] as Item[] })
 
   // ── Data loading ──
   const loadItems = useCallback(async () => {
@@ -210,23 +210,23 @@ export default function Dashboard() {
   }, [loadItems, loadAuditChecks, supabase])
 
   useEffect(() => {
+    setDraft({}); setEditingField(null)
     if (selectedItem) {
       setLogInput(''); setLogAddDate(''); setLogAddOpen(false); setEditingLog(null); setLogEditDate('')
       setUhForm({ user_name: '', date_from: '', date_to: '' })
       loadLogs(selectedItem.id); loadUserHistory(selectedItem.id); loadPhotos(selectedItem.id)
-      setPanelEditMode(false); setEditingField(null)
     } else {
-      setLogs([]); setUserHistory([]); setPhotos([]); setEditingField(null)
+      setLogs([]); setUserHistory([]); setPhotos([])
     }
   }, [selectedItem, loadLogs, loadUserHistory, loadPhotos])
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      const { selectedItem, role, modalOpen, importOpen, panelEditMode, filtered } = snap.current
+      const { selectedItem, role, modalOpen, importOpen, filtered } = snap.current
       const tag = (e.target as HTMLElement).tagName
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
-      if (modalOpen || importOpen || panelEditMode) return
+      if (modalOpen || importOpen) return
 
       if (e.key === 'ArrowDown') {
         e.preventDefault()
@@ -245,7 +245,7 @@ export default function Dashboard() {
         })
       }
       if (e.key === 'Escape') {
-        setSelectedItem(null); setPanelEditMode(false)
+        setSelectedItem(null)
       }
       if ((e.key === 'e' || e.key === 'E') && selectedItem && role === 'admin') {
         e.preventDefault()
@@ -518,50 +518,51 @@ export default function Dashboard() {
 
   const DATE_FIELDS = new Set(['date_acquired', 'purchased_date', 'warranty_exp', 'last_checked'])
 
-  async function saveField(field: string, raw: string) {
-    if (!selectedItem) return
-    const value = DATE_FIELDS.has(field) ? (toDBDate(raw) || null) : raw
-    await supabase.from('items').update({ [field]: value, updated_at: new Date().toISOString() }).eq('id', selectedItem.id)
-    const updated = { ...selectedItem, [field]: value }
-    setSelectedItem(updated)
-    setItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, [field]: value } : i))
+  // Stage a field edit into draft (replaces immediate DB save)
+  function commitToDraft(field: string, value: string) {
+    setDraft(d => ({ ...d, [field]: value }))
     setEditingField(null)
-    toast('Saved')
   }
 
   function startEdit(field: string, current: string | null) {
     if (role !== 'admin') return
     setEditingField(field)
-    setEditingValue(DATE_FIELDS.has(field) ? toFormDate(current) : (current ?? ''))
+    // Prefer already-staged draft value, fall back to item value
+    const staged = draft[field]
+    setEditingValue(staged !== undefined ? staged : DATE_FIELDS.has(field) ? toFormDate(current) : (current ?? ''))
   }
 
-  function startPanelEdit() {
-    if (!selectedItem) return
-    setPanelForm({
-      name: selectedItem.name, brand: selectedItem.brand ?? '', serial: selectedItem.serial,
-      status: selectedItem.status, condition: selectedItem.condition, assigned_to: selectedItem.assigned_to,
-      category: selectedItem.category, department: selectedItem.department ?? '',
-      date_acquired: toFormDate(selectedItem.date_acquired),
-      warranty_exp: toFormDate(selectedItem.warranty_exp),
-      last_checked: toFormDate(selectedItem.last_checked),
-      remarks: selectedItem.remarks ?? '',
-    })
-    setPanelEditMode(true)
-  }
-  async function savePanelEdit() {
-    if (!selectedItem || !panelForm.name?.trim()) return
+  async function saveDraft() {
+    if (!selectedItem || !isDirty) return
+    const name = draft.name ?? selectedItem.name
+    if (!name.trim()) { toast('Item name is required'); return }
     setPanelSaving(true)
-    const payload = {
-      name: panelForm.name, brand: panelForm.brand, serial: panelForm.serial,
-      status: panelForm.status, condition: panelForm.condition, assigned_to: panelForm.assigned_to,
-      category: panelForm.category, department: panelForm.department,
-      date_acquired: toDBDate(panelForm.date_acquired || '') || null,
-      warranty_exp: toDBDate(panelForm.warranty_exp || '') || null,
-      last_checked: toDBDate(panelForm.last_checked || '') || null,
-      remarks: panelForm.remarks, updated_at: new Date().toISOString(),
+    const payload: Record<string, unknown> = {
+      name,
+      brand: draft.brand ?? selectedItem.brand ?? '',
+      serial: draft.serial ?? selectedItem.serial,
+      status: draft.status ?? selectedItem.status,
+      condition: draft.condition ?? selectedItem.condition,
+      assigned_to: draft.assigned_to ?? selectedItem.assigned_to,
+      category: draft.category ?? selectedItem.category,
+      department: draft.department ?? selectedItem.department ?? '',
+      date_acquired: 'date_acquired' in draft ? (toDBDate(draft.date_acquired) || null) : selectedItem.date_acquired,
+      purchased_date: 'purchased_date' in draft ? (toDBDate(draft.purchased_date) || null) : selectedItem.purchased_date,
+      warranty_exp: 'warranty_exp' in draft ? (toDBDate(draft.warranty_exp) || null) : selectedItem.warranty_exp,
+      last_checked: 'last_checked' in draft ? (toDBDate(draft.last_checked) || null) : selectedItem.last_checked,
+      remarks: draft.remarks ?? selectedItem.remarks ?? '',
+      updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('items').update(payload).eq('id', selectedItem.id)
-    if (!error) { toast('Item updated'); await loadItems(); setSelectedItem({ ...selectedItem, ...payload } as Item); setPanelEditMode(false) }
+    if (!error) {
+      toast('Saved')
+      const updated = { ...selectedItem, ...payload } as Item
+      setSelectedItem(updated)
+      setItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...payload } : i))
+      setDraft({})
+    } else {
+      toast('Error: ' + error.message)
+    }
     setPanelSaving(false)
   }
 
@@ -655,7 +656,7 @@ export default function Dashboard() {
     })
 
   // Keep snap updated for keyboard handler
-  snap.current = { selectedItem, role, modalOpen, importOpen, panelEditMode, filtered }
+  snap.current = { selectedItem, role, modalOpen, importOpen, filtered }
 
   const retiredCount = items.filter(i => i.status === 'Retired').length
   const total = items.filter(i => i.status !== 'Retired').length
@@ -907,81 +908,36 @@ export default function Dashboard() {
             <>
               <div className="panel-header">
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  {editingField === 'name' && !panelEditMode
+                  {editingField === 'name'
                     ? <input autoFocus type="text" value={editingValue}
                         onChange={e => setEditingValue(e.target.value)}
-                        onBlur={() => saveField('name', editingValue)}
+                        onBlur={() => commitToDraft('name', editingValue)}
                         onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                         className="panel-title"
                         style={{ border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', width: '100%', padding: '1px 2px', fontFamily: 'var(--font)' }} />
                     : <div className="panel-title"
-                        onClick={() => !panelEditMode && startEdit('name', selectedItem.name)}
-                        style={role === 'admin' && !panelEditMode ? { cursor: 'text' } : {}}>
-                        {panelEditMode ? panelForm.name || selectedItem.name : selectedItem.name}
+                        onClick={() => startEdit('name', selectedItem.name)}
+                        style={role === 'admin' ? { cursor: 'text' } : {}}>
+                        {draft.name ?? selectedItem.name}
                       </div>}
-                  {editingField === 'brand' && !panelEditMode
+                  {editingField === 'brand'
                     ? <input autoFocus type="text" value={editingValue}
                         onChange={e => setEditingValue(e.target.value)}
-                        onBlur={() => saveField('brand', editingValue)}
+                        onBlur={() => commitToDraft('brand', editingValue)}
                         onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                         className="panel-sub"
                         style={{ border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', width: '100%', padding: '1px 2px', fontFamily: 'var(--font)', marginTop: 3 }} />
                     : <div className="panel-sub"
-                        onClick={() => !panelEditMode && startEdit('brand', selectedItem.brand)}
-                        style={role === 'admin' && !panelEditMode ? { cursor: 'text', marginTop: 3 } : { marginTop: 3 }}>
-                        {panelEditMode ? panelForm.brand || 'No brand' : (selectedItem.brand || 'No brand')}
+                        onClick={() => startEdit('brand', selectedItem.brand)}
+                        style={role === 'admin' ? { cursor: 'text', marginTop: 3 } : { marginTop: 3 }}>
+                        {(draft.brand ?? selectedItem.brand) || 'No brand'}
                       </div>}
                 </div>
-                <button className="panel-close" onClick={() => { setSelectedItem(null); setPanelEditMode(false) }}>✕</button>
+                <button className="panel-close" onClick={() => setSelectedItem(null)}>✕</button>
               </div>
 
-              {panelEditMode ? (
-                /* ── Quick edit form ── */
-                <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[
-                    { label: 'Item name', key: 'name', type: 'text', placeholder: 'Item name' },
-                    { label: 'Brand', key: 'brand', type: 'text', placeholder: 'Brand' },
-                    { label: 'Serial', key: 'serial', type: 'text', placeholder: 'Serial number' },
-                    { label: 'Assigned to', key: 'assigned_to', type: 'text', placeholder: 'Assigned to' },
-                    { label: 'Department', key: 'department', type: 'text', placeholder: 'Department' },
-                  ].map(({ label, key, type, placeholder }) => (
-                    <div key={key}>
-                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 4 }}>{label}</div>
-                      <input type={type} value={(panelForm as Record<string, string>)[key] ?? ''}
-                        onChange={e => setPanelForm(f => ({ ...f, [key]: e.target.value }))}
-                        placeholder={placeholder}
-                        style={{ width: '100%', fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
-                    </div>
-                  ))}
-                  {(['status', 'condition', 'category'] as const).map(key => (
-                    <div key={key}>
-                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 4 }}>{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-                      <select value={(panelForm as Record<string, string>)[key] ?? ''} onChange={e => setPanelForm(f => ({ ...f, [key]: e.target.value }))}
-                        style={{ width: '100%', fontSize: 12, height: 34 }}>
-                        {key === 'status' && <><option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option></>}
-                        {key === 'condition' && <><option>Good</option><option>Fair</option><option>Poor</option></>}
-                        {key === 'category' && <><option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option></>}
-                      </select>
-                    </div>
-                  ))}
-                  {[{ label: 'Assigned date', key: 'date_acquired' }, { label: 'Warranty exp', key: 'warranty_exp' }, { label: 'Last checked', key: 'last_checked' }].map(({ label, key }) => (
-                    <div key={key}>
-                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 4 }}>{label}</div>
-                      <DatePicker value={(panelForm as Record<string, string>)[key] ?? ''} onChange={v => setPanelForm(f => ({ ...f, [key]: v }))} />
-                    </div>
-                  ))}
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 4 }}>Remarks</div>
-                    <textarea value={panelForm.remarks ?? ''} onChange={e => setPanelForm(f => ({ ...f, remarks: e.target.value }))}
-                      rows={3} style={{ width: '100%', fontSize: 12, padding: '7px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', resize: 'vertical' }} />
-                  </div>
-                </div>
-              ) : (
-                /* ── Read / inline-edit view ── */
-                <div className="panel-body">
-
-                  {/* reusable inline styles */}
-                  {/* editable span: dotted underline on hover, cursor text/pointer */}
+              {/* ── Inline-edit view ── */}
+              <div className="panel-body">
 
                   <div className="panel-section">
                     <div className="panel-section-title">Status &amp; Condition</div>
@@ -989,24 +945,24 @@ export default function Dashboard() {
                     {/* Status */}
                     <div className="detail-row"><span className="detail-key">Status</span>
                       {editingField === 'status'
-                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('status', e.target.value) }} onBlur={() => setEditingField(null)}
+                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); commitToDraft('status', e.target.value) }} onBlur={() => setEditingField(null)}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
                             {['Available','In use','Maintenance','Retired'].map(o => <option key={o}>{o}</option>)}
                           </select>
                         : <span className="detail-val" onClick={() => role === 'admin' && startEdit('status', selectedItem.status)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
-                            <span className={`badge ${STATUS_CLASS[selectedItem.status] ?? ''}`}>{selectedItem.status}</span>
+                            {(() => { const s = draft.status ?? selectedItem.status; return <span className={`badge ${STATUS_CLASS[s] ?? ''}`}>{s}</span> })()}
                           </span>}
                     </div>
 
                     {/* Condition */}
                     <div className="detail-row"><span className="detail-key">Condition</span>
                       {editingField === 'condition'
-                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('condition', e.target.value) }} onBlur={() => setEditingField(null)}
+                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); commitToDraft('condition', e.target.value) }} onBlur={() => setEditingField(null)}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
                             {['Good','Fair','Poor'].map(o => <option key={o}>{o}</option>)}
                           </select>
                         : <span className="detail-val" onClick={() => role === 'admin' && startEdit('condition', selectedItem.condition)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
-                            <span className={`badge ${COND_CLASS[selectedItem.condition] ?? ''}`}>{selectedItem.condition}</span>
+                            {(() => { const c = draft.condition ?? selectedItem.condition; return <span className={`badge ${COND_CLASS[c] ?? ''}`}>{c}</span> })()}
                           </span>}
                     </div>
 
@@ -1014,11 +970,11 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Assigned to</span>
                       {editingField === 'assigned_to'
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
-                            onBlur={() => saveField('assigned_to', editingValue)}
+                            onBlur={() => commitToDraft('assigned_to', editingValue)}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
                         : <span className="detail-val" onClick={() => role === 'admin' && startEdit('assigned_to', selectedItem.assigned_to)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {selectedItem.assigned_to || '—'}
+                            {(draft.assigned_to ?? selectedItem.assigned_to) || '—'}
                           </span>}
                     </div>
 
@@ -1026,10 +982,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('date_acquired', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('date_acquired', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {fmtDate(selectedItem.date_acquired)}
+                            {'date_acquired' in draft ? (draft.date_acquired || '—') : fmtDate(selectedItem.date_acquired)}
                           </span>}
                     </div>
 
@@ -1053,12 +1009,12 @@ export default function Dashboard() {
                     {/* Category */}
                     <div className="detail-row"><span className="detail-key">Category</span>
                       {editingField === 'category'
-                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); saveField('category', e.target.value) }} onBlur={() => setEditingField(null)}
+                        ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); commitToDraft('category', e.target.value) }} onBlur={() => setEditingField(null)}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
                             {['IT','Furniture','Equipment','Other'].map(o => <option key={o}>{o}</option>)}
                           </select>
                         : <span className="detail-val" onClick={() => role === 'admin' && startEdit('category', selectedItem.category)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
-                            {selectedItem.category}
+                            {draft.category ?? selectedItem.category}
                           </span>}
                     </div>
 
@@ -1066,11 +1022,11 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Department</span>
                       {editingField === 'department'
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
-                            onBlur={() => saveField('department', editingValue)}
+                            onBlur={() => commitToDraft('department', editingValue)}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                             style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
                         : <span className="detail-val" onClick={() => role === 'admin' && startEdit('department', selectedItem.department)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {selectedItem.department || '—'}
+                            {(draft.department ?? selectedItem.department) || '—'}
                           </span>}
                     </div>
 
@@ -1078,11 +1034,11 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Serial No.</span>
                       {editingField === 'serial'
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
-                            onBlur={() => saveField('serial', editingValue)}
+                            onBlur={() => commitToDraft('serial', editingValue)}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                             style={{ fontSize: 12, fontFamily: 'var(--mono)', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px' }} />
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('serial', selectedItem.serial)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {selectedItem.serial || '—'}
+                            {(draft.serial ?? selectedItem.serial) || '—'}
                           </span>}
                     </div>
                   </div>
@@ -1094,10 +1050,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Purchased date</span>
                       {editingField === 'purchased_date'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('purchased_date', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('purchased_date', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('purchased_date', selectedItem.purchased_date)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {fmtDate(selectedItem.purchased_date)}
+                            {'purchased_date' in draft ? (draft.purchased_date || '—') : fmtDate(selectedItem.purchased_date)}
                           </span>}
                     </div>
 
@@ -1105,10 +1061,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Warranty exp.</span>
                       {editingField === 'warranty_exp'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('warranty_exp', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('warranty_exp', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('warranty_exp', selectedItem.warranty_exp)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {fmtDate(selectedItem.warranty_exp)}
+                            {'warranty_exp' in draft ? (draft.warranty_exp || '—') : fmtDate(selectedItem.warranty_exp)}
                           </span>}
                     </div>
 
@@ -1116,10 +1072,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Last checked</span>
                       {editingField === 'last_checked'
                         ? <div style={{ flex: 1, minWidth: 0 }}>
-                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) saveField('last_checked', v) }} placeholder="DD-MM-YYYY" />
+                            <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('last_checked', v) }} placeholder="DD-MM-YYYY" />
                           </div>
                         : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('last_checked', selectedItem.last_checked)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                            {fmtDate(selectedItem.last_checked)}
+                            {'last_checked' in draft ? (draft.last_checked || '—') : fmtDate(selectedItem.last_checked)}
                           </span>}
                     </div>
                   </div>
@@ -1129,11 +1085,11 @@ export default function Dashboard() {
                     {editingField === 'remarks'
                       ? <textarea autoFocus value={editingValue} rows={3}
                           onChange={e => setEditingValue(e.target.value)}
-                          onBlur={() => saveField('remarks', editingValue)}
+                          onBlur={() => commitToDraft('remarks', editingValue)}
                           onKeyDown={e => { if (e.key === 'Escape') setEditingField(null) }}
                           style={{ width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--accent)', outline: 'none', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', resize: 'vertical', marginTop: 4 }} />
                       : <p className="panel-remarks" onClick={() => role === 'admin' && startEdit('remarks', selectedItem.remarks)} style={role === 'admin' ? { cursor: 'text' } : {}}>
-                          {selectedItem.remarks || '—'}
+                          {(draft.remarks ?? selectedItem.remarks) || '—'}
                         </p>}
                   </div>
 
@@ -1367,12 +1323,18 @@ export default function Dashboard() {
                         </div>}
                   </div>
                 </div>
-              )}
 
               {/* Panel footer */}
               {role === 'admin' && (
                 <div className="panel-footer">
                   <button className="btn" style={{ color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)' }} onClick={() => deleteItem(selectedItem)}>Delete</button>
+                  <button
+                    className={`btn${isDirty ? ' btn-primary' : ''}`}
+                    onClick={saveDraft}
+                    disabled={!isDirty || panelSaving}
+                    style={!isDirty ? { opacity: 0.45, cursor: 'default' } : {}}>
+                    {panelSaving ? 'Saving…' : 'Save'}
+                  </button>
                 </div>
               )}
             </>
