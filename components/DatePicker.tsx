@@ -10,6 +10,7 @@ interface Props {
   maxDate?: string    // DD-MM-YYYY — days after this are disabled
   autoOpen?: boolean  // open calendar immediately on mount
   onClose?: () => void // called when calendar closes without selection
+  compact?: boolean   // hide input row — only the floating calendar renders (no layout footprint)
 }
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -25,7 +26,7 @@ function parseDate(dmy: string): Date | null {
 
 function fmt2(n: number) { return String(n).padStart(2, '0') }
 
-export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY', minDate, maxDate, autoOpen, onClose }: Props) {
+export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY', minDate, maxDate, autoOpen, onClose, compact }: Props) {
   const [open, setOpen]           = useState(false)
   const [yearPicker, setYearPicker] = useState(false)
   const [viewYear, setViewYear]   = useState(new Date().getFullYear())
@@ -109,8 +110,8 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      {/* Input row */}
-      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      {/* Input row — hidden in compact mode so no layout footprint in tight containers */}
+      {!compact && <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <input
           type="text"
           value={value}
@@ -142,7 +143,7 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
             <path d="M4.75 0a.75.75 0 0 1 .75.75V2h5V.75a.75.75 0 0 1 1.5 0V2h1.25A2.25 2.25 0 0 1 15.5 4.25v9A2.25 2.25 0 0 1 13.25 15.5H2.75A2.25 2.25 0 0 1 .5 13.25v-9A2.25 2.25 0 0 1 2.75 2H4V.75A.75.75 0 0 1 4.75 0ZM2 6.5v6.75c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75V6.5H2Zm.75-3A.75.75 0 0 0 2 4.25V5h12v-.75a.75.75 0 0 0-.75-.75H2.75Z"/>
           </svg>
         </button>
-      </div>
+      </div>}
 
       {/* Dropdown */}
       {open && (

@@ -1325,9 +1325,9 @@ export default function Dashboard() {
                               {editingPhotoId === photo.id ? (
                                 <DatePicker
                                   autoOpen
+                                  compact
                                   value={photoDraftDate}
                                   onChange={val => {
-                                    // DatePicker gives DD-MM-YYYY, convert to YYYY-MM-DD for DB
                                     const dbDate = val.split('-').reverse().join('-')
                                     savePhotoDate(photo.id, dbDate)
                                   }}
