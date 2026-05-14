@@ -778,7 +778,7 @@ input[type="checkbox"] {
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow-modal);
   padding: 0;
-  width: 520px;
+  width: 700px;
   max-width: 95vw;
   max-height: 90vh;
   overflow-y: auto;
