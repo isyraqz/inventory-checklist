@@ -85,12 +85,20 @@ html { font-size: 14px; }
 /* ── Ambient blobs (dark mode only, body pseudo-elements) ── */
 body {
   font-family: var(--font);
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 65% 55% at 12% 8%,  rgba(196,106,48,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 88% 90%, rgba(139,69,19,0.07)  0%, transparent 65%);
   color: var(--text);
   min-height: 100vh;
-  transition: background 0.25s, color 0.25s;
+  transition: background-color 0.25s, color 0.25s;
   -webkit-font-smoothing: antialiased;
   position: relative;
+}
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 65% 55% at 12% 8%,  rgba(196,106,48,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 88% 90%, rgba(139,69,19,0.06)  0%, transparent 65%);
 }
 body::before {
   content: '';
