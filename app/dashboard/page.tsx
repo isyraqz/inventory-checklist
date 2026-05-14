@@ -929,11 +929,11 @@ export default function Dashboard() {
               <colgroup>
                 {role === 'admin' && <col style={{ width: '36px' }} />}
                 <col style={{ width: '52px' }} />
-                <col style={{ width: '220px' }} />
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '150px' }} />
+                <col style={{ width: '300px' }} />
+                <col style={{ width: '180px' }} />
+                <col style={{ width: '180px' }} />
+                <col style={{ width: '180px' }} />
+                <col style={{ width: '180px' }} />
                 <col />
               </colgroup>
               <thead>

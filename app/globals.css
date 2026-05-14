@@ -627,7 +627,7 @@ select { height: 38px; cursor: pointer; }
   z-index: 1;
 }
 .table-scroll { overflow-x: auto; }
-table { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+table { width: 100%; min-width: 1200px; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
 thead tr { background: var(--surface2); border-bottom: 1px solid var(--border-strong); box-shadow: var(--shadow-inset); }
 th {
   padding: 10px 20px 10px 14px;
