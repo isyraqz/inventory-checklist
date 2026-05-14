@@ -497,6 +497,7 @@ tbody tr.row-selected td:first-child { box-shadow: inset 3px 0 0 #8B4513; }
 
 .stat-label {
   font-size: 21px;
+  font-family: var(--serif);
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
