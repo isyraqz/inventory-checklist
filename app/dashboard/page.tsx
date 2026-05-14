@@ -760,33 +760,31 @@ export default function Dashboard() {
   const pct = total ? Math.round(checkedCount / total * 100) : 0
   const colSpanFull = COL_LABELS.length + 1 + (role === 'admin' ? 1 : 0)
 
-  const isAdminHeader = role === 'admin'
-  const adminStyle = (extra?: React.CSSProperties): React.CSSProperties =>
-    isAdminHeader ? { background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: '#fff', ...extra } : {}
+  const isAdmin = role === 'admin'
 
   return (
     <>
       {/* Header */}
-      <header className="app-header" style={isAdminHeader ? { background: '#1e3a5f', borderBottomColor: 'rgba(255,255,255,0.1)' } : {}}>
-        <div className="logo" style={isAdminHeader ? { color: '#ffffff' } : {}}>
+      <header className="app-header">
+        <div className="logo">
           <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
             <path d="M4 1.5A1.5 1.5 0 0 1 5.5 0h4.086a1.5 1.5 0 0 1 1.06.44l2.915 2.914A1.5 1.5 0 0 1 14 4.414V13.5A1.5 1.5 0 0 1 12.5 15h-7A1.5 1.5 0 0 1 4 13.5v-12Z"
-              fill={isAdminHeader ? 'rgba(255,255,255,0.2)' : 'var(--surface2)'} stroke={isAdminHeader ? 'rgba(255,255,255,0.4)' : 'var(--border-strong)'} strokeWidth="1"/>
-            <path d="M9.5 0v3.5A1.5 1.5 0 0 0 11 5h3" stroke={isAdminHeader ? 'rgba(255,255,255,0.4)' : 'var(--border-strong)'} strokeWidth="1" fill="none"/>
-            <path d="M6 8h4M6 10.5h3" stroke={isAdminHeader ? 'rgba(255,255,255,0.6)' : 'var(--text-hint)'} strokeWidth="1" strokeLinecap="round"/>
+              fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.4)" strokeWidth="1"/>
+            <path d="M9.5 0v3.5A1.5 1.5 0 0 0 11 5h3" stroke="rgba(255,255,255,0.4)" strokeWidth="1" fill="none"/>
+            <path d="M6 8h4M6 10.5h3" stroke="rgba(255,255,255,0.6)" strokeWidth="1" strokeLinecap="round"/>
           </svg>
           <span className="logo-text">Verus Virtus — Inventory Checklist</span>
         </div>
         <div className="header-right">
           {userEmail && (
-            <span className="user-email" style={isAdminHeader ? { color: 'rgba(255,255,255,0.6)' } : {}}>
-              {userEmail}{isAdminHeader && <span style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}> (admin)</span>}
+            <span className="user-email">
+              {userEmail}{isAdmin && <span style={{ color: 'var(--header-muted)', fontStyle: 'italic' }}> (admin)</span>}
             </span>
           )}
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode" style={adminStyle()}>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <button className="btn" onClick={signOut} style={adminStyle()}>Sign out</button>
+          <button className="btn" onClick={signOut}>Sign out</button>
         </div>
       </header>
 
