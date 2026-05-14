@@ -29,8 +29,8 @@
   /* status */
   --status-total:      #44403C;
   --status-inuse:      #92400E;
-  --status-avail:      #16A34A;
-  --status-maint:      #DC2626;
+  --status-avail:      #166534;
+  --status-maint:      #991B1B;
   --status-total-bg:   rgba(28,25,23,0.06);
   --status-inuse-bg:   #FEF3C7;
   --status-avail-bg:   #DCFCE7;
@@ -478,17 +478,17 @@ tbody tr.row-selected td:first-child { box-shadow: inset 3px 0 0 #8B4513; }
 
 /* Available — tinted background + top accent border + coloured label */
 .stat-card-avail {
-  background: rgba(22,163,74,0.06) !important;
-  border-color: rgba(22,163,74,0.2) !important;
-  border-top: 3px solid #16A34A !important;
+  background: rgba(22,101,52,0.06) !important;
+  border-color: rgba(22,101,52,0.3) !important;
+  border-top: 3px solid #166534 !important;
 }
 .stat-card-avail .stat-label { color: var(--status-avail); }
 
 /* Maintenance — tinted background + top accent border + coloured label */
 .stat-card-maint {
-  background: rgba(220,38,38,0.06) !important;
-  border-color: rgba(220,38,38,0.2) !important;
-  border-top: 3px solid #DC2626 !important;
+  background: rgba(153,27,27,0.06) !important;
+  border-color: rgba(153,27,27,0.3) !important;
+  border-top: 3px solid #991B1B !important;
 }
 .stat-card-maint .stat-label { color: var(--status-maint); }
 
