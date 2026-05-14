@@ -788,10 +788,9 @@ export default function Dashboard() {
         </div>
         <div className="header-right">
           {userEmail && (
-            <span className="user-email">
-              {userEmail}{isAdmin && <span className="admin-label"> (admin)</span>}
-            </span>
+            <span className="user-email">{userEmail}</span>
           )}
+          {isAdmin && <span className="admin-chip">admin</span>}
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>

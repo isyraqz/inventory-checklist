@@ -245,8 +245,26 @@ body::after {
   box-shadow: none;
 }
 
-/* Admin label */
-.admin-label { color: var(--accent); font-style: italic; }
+/* Admin chip — always fully visible, separate from truncating email pill */
+.admin-chip {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #C46A30;
+  background: rgba(139,69,19,0.18);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(139,69,19,0.28);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .admin-chip {
+  color: #8B4513;
+  background: rgba(28,25,23,0.1);
+  border-color: rgba(28,25,23,0.2);
+}
 
 /* ── Layout ── */
 .dashboard-layout {
@@ -402,7 +420,12 @@ body::after {
 
 /* Row clickable */
 tbody tr { cursor: pointer; }
-tbody tr.row-selected td { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+/* Selected row — brown tint + left accent bar (Option A) */
+tbody tr.row-selected td { background: rgba(139,69,19,0.10); }
+tbody tr.row-selected td:first-child { border-left: 3px solid #8B4513; padding-left: 9px; }
+
+[data-theme="dark"] tbody tr.row-selected td { background: rgba(196,106,48,0.14); }
+[data-theme="dark"] tbody tr.row-selected td:first-child { border-left: 3px solid #C46A30; padding-left: 9px; }
 
 /* ── Stats ── */
 .stats-row {
