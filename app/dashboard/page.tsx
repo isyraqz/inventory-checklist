@@ -767,7 +767,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="app-header">
         <div className="logo">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" className="logo-svg">
             <path d="M4 1.5A1.5 1.5 0 0 1 5.5 0h4.086a1.5 1.5 0 0 1 1.06.44l2.915 2.914A1.5 1.5 0 0 1 14 4.414V13.5A1.5 1.5 0 0 1 12.5 15h-7A1.5 1.5 0 0 1 4 13.5v-12Z"
               fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.4)" strokeWidth="1"/>
             <path d="M9.5 0v3.5A1.5 1.5 0 0 0 11 5h3" stroke="rgba(255,255,255,0.4)" strokeWidth="1" fill="none"/>
@@ -778,7 +778,7 @@ export default function Dashboard() {
         <div className="header-right">
           {userEmail && (
             <span className="user-email">
-              {userEmail}{isAdmin && <span style={{ color: 'var(--header-muted)', fontStyle: 'italic' }}> (admin)</span>}
+              {userEmail}{isAdmin && <span className="admin-label"> (admin)</span>}
             </span>
           )}
           <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark mode">
@@ -830,8 +830,7 @@ export default function Dashboard() {
               <input type="text" className="search-input" placeholder="Search items, serial, brand, department…"
                 value={search} onChange={e => setSearch(e.target.value)} />
               {search && (
-                <button type="button" onClick={() => setSearch('')} title="Clear"
-                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-hint)', fontSize: 13, padding: 2, display: 'flex', alignItems: 'center' }}>✕</button>
+                <button type="button" onClick={() => setSearch('')} title="Clear" className="search-clear">✕</button>
               )}
             </div>
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
@@ -839,25 +838,23 @@ export default function Dashboard() {
               <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
             </select>
             {retiredCount > 0 && (
-              <button className="btn" onClick={() => setShowRetired(s => !s)}
-                style={showRetired ? { background: '#1e3a5f', color: '#fff', borderColor: '#1e3a5f' } : { color: '#999', borderColor: '#ddd' }}>
+              <button className={`btn ${showRetired ? 'btn-active' : 'btn-inactive-retired'}`} onClick={() => setShowRetired(s => !s)}>
                 {showRetired ? 'Hide retired' : 'Show retired'}
-                <span style={{ marginLeft: 5, background: showRetired ? 'rgba(255,255,255,0.2)' : '#eee', color: showRetired ? '#fff' : '#999', borderRadius: 10, padding: '1px 6px', fontSize: 11 }}>{retiredCount}</span>
+                <span>{retiredCount}</span>
               </button>
             )}
             <select value={filterCat} onChange={e => setFilterCat(e.target.value)}>
               <option value="">All categories</option>
               <option>IT</option><option>Furniture</option><option>Equipment</option><option>Other</option>
             </select>
-            <button className="btn" onClick={() => setShowCharts(s => !s)}
-              style={showCharts ? { background: '#1e3a5f', color: '#fff', borderColor: '#1e3a5f' } : { borderColor: '#1e3a5f', color: '#1e3a5f' }}>
-              <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
+            <button className={`btn ${showCharts ? 'btn-active' : 'btn-charts-inactive'}`} onClick={() => setShowCharts(s => !s)}>
+              <svg viewBox="0 0 16 16" fill="currentColor" className="btn-icon">
                 <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3Zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3Z"/>
               </svg>
               Charts
             </button>
             <button className="btn" onClick={exportCSV}>
-              <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
+              <svg viewBox="0 0 16 16" fill="currentColor" className="btn-icon">
                 <path d="M8 1.25a.75.75 0 0 1 .75.75v6.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L7.25 8.19V2A.75.75 0 0 1 8 1.25ZM2 13.25a.75.75 0 0 0 0 1.5h12a.75.75 0 0 0 0-1.5H2Z" />
               </svg>
               Export
@@ -866,13 +863,13 @@ export default function Dashboard() {
               <>
                 <button className="btn" onClick={() => importInputRef.current?.click()}
                   title="Import items from CSV">
-                  <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="btn-icon">
                     <path d="M8 1.25a.75.75 0 0 1 .75.75v6.19l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L7.25 8.19V2A.75.75 0 0 1 8 1.25ZM2 13.25a.75.75 0 0 0 0 1.5h12a.75.75 0 0 0 0-1.5H2Z"
                       transform="rotate(180 8 8)" />
                   </svg>
                   Import
                 </button>
-                <input ref={importInputRef} type="file" accept=".csv,.txt" onChange={handleCSVFile} style={{ display: 'none' }} />
+                <input ref={importInputRef} type="file" accept=".csv,.txt" onChange={handleCSVFile} className="hidden-input" />
               </>
             )}
           </div>
@@ -882,37 +879,31 @@ export default function Dashboard() {
           {/* Unified selection bar — appears from 1+ items checked, bulk actions appear at 2+ */}
           {auditChecked.size > 0 && (
             <div className="bulk-bar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="bulk-bar-left">
                 <input type="checkbox"
                   checked={auditChecked.size === filtered.length && filtered.length > 0}
                   onChange={toggleSelectAll} />
-                <span style={{ fontWeight: 500, color: 'var(--accent-fg)' }}>{auditChecked.size} item{auditChecked.size !== 1 ? 's' : ''} selected</span>
+                <span className="bulk-count">{auditChecked.size} item{auditChecked.size !== 1 ? 's' : ''} selected</span>
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div className="bulk-bar-right">
                 {auditChecked.size > 1 && (
                   <select defaultValue="" onChange={e => { if (e.target.value) { bulkSetStatus(e.target.value as ItemStatus); e.currentTarget.value = '' } }}
-                    style={{ height: 32, fontSize: 12, background: 'rgba(128,128,128,0.2)', color: 'var(--accent-fg)', border: '1px solid rgba(128,128,128,0.3)' }}>
+                    className="bulk-status-select">
                     <option value="" disabled>Set status…</option>
                     <option>Available</option><option>In use</option><option>Maintenance</option><option>Retired</option>
                   </select>
                 )}
-                <button className="btn" onClick={clearAudit}
-                  style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(128,128,128,0.2)', color: 'var(--accent-fg)', borderColor: 'rgba(128,128,128,0.3)' }}>
-                  Clear Selection
-                </button>
-                <button className="btn" onClick={bulkDelete}
-                  style={{ height: 32, padding: '0 12px', fontSize: 12, background: 'rgba(185,28,28,0.25)', color: '#f87171', borderColor: 'rgba(185,28,28,0.4)' }}>
-                  Delete {auditChecked.size}
-                </button>
+                <button className="btn bulk-select-btn" onClick={clearAudit}>Clear Selection</button>
+                <button className="btn bulk-delete-btn" onClick={bulkDelete}>Delete {auditChecked.size}</button>
               </div>
             </div>
           )}
 
           {/* Add button row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
+          <div className="add-btn-row">
             {role === 'admin' && (
-              <button className="btn btn-primary" onClick={() => openModal()} style={{ marginLeft: 'auto' }}>
-                <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
+              <button className="btn btn-primary ml-auto" onClick={() => openModal()}>
+                <svg viewBox="0 0 16 16" fill="currentColor" className="btn-icon">
                   <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
                 </svg>
                 Add item
@@ -927,9 +918,9 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   {role === 'admin' && (
-                    <th style={{ width: 36, cursor: 'default' }} />
+                    <th className="th-no" />
                   )}
-                  <th style={{ width: 48, cursor: 'default', color: 'var(--text-hint)' }}>No</th>
+                  <th className="th-number">No</th>
                   {COL_LABELS.map(({ key, label }) => {
                     const colCls: Record<string, string> = { date_acquired: 'col-date', remarks: 'col-remarks' }
                     const sortCls = sortKey === key ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : ''
@@ -965,14 +956,14 @@ export default function Dashboard() {
                         <input type="checkbox" checked={auditChecked.has(item.id)} onChange={() => toggleItem(item.id)} />
                       </td>
                     )}
-                    <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-hint)' }}>{String(idx + 1).padStart(3, '0')}</td>
+                    <td className="col-no">{String(idx + 1).padStart(3, '0')}</td>
                     <td className="item-name">{item.name}</td>
-                    <td>{item.brand || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
-                    <td>{item.assigned_to || <span style={{ color: 'var(--text-hint)' }}>—</span>}</td>
+                    <td>{item.brand || <span className="text-hint">—</span>}</td>
+                    <td>{item.assigned_to || <span className="text-hint">—</span>}</td>
                     <td><span className={`badge ${STATUS_CLASS[item.status] ?? ''}`}>{item.status}</span></td>
-                    <td className="col-date mono" style={{ fontSize: 11 }}>{fmtDate(item.date_acquired)}</td>
-                    <td className="col-remarks" style={{ color: 'var(--text-muted)', fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.remarks || <span style={{ color: 'var(--text-hint)' }}>—</span>}
+                    <td className="col-date col-date-cell mono">{fmtDate(item.date_acquired)}</td>
+                    <td className="col-remarks col-remarks-cell">
+                      {item.remarks || <span className="text-hint">—</span>}
                     </td>
                   </tr>
                 ))}
@@ -982,10 +973,10 @@ export default function Dashboard() {
           </div>
 
           {/* Keyboard shortcut hint */}
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 2px 0', fontSize: 11, color: 'var(--text-hint)' }}>
+          <div className="shortcut-bar">
             {[['↑↓', 'Navigate']].map(([k, l]) => (
-              <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 5px', fontFamily: 'var(--mono)', fontSize: 10 }}>{k}</span>
+              <span key={k} className="shortcut-item">
+                <span className="shortcut-key">{k}</span>
                 {l}
               </span>
             ))}
@@ -997,17 +988,15 @@ export default function Dashboard() {
           {selectedItem && (
             <>
               <div className="panel-header">
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="panel-title-wrap">
                   {editingField === 'name'
                     ? <input autoFocus type="text" value={editingValue}
                         onChange={e => setEditingValue(e.target.value)}
                         onBlur={() => commitToDraft('name', editingValue)}
                         onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
-                        className="panel-title"
-                        style={{ border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', width: '100%', padding: '1px 2px', fontFamily: 'var(--font)' }} />
-                    : <div className="panel-title"
-                        onClick={() => startEdit('name', selectedItem.name)}
-                        style={role === 'admin' ? { cursor: 'text' } : {}}>
+                        className="panel-title panel-inline-input" />
+                    : <div className={`panel-title${role === 'admin' ? ' cursor-text' : ''}`}
+                        onClick={() => startEdit('name', selectedItem.name)}>
                         {draft.name ?? selectedItem.name}
                       </div>}
                   {editingField === 'brand'
@@ -1015,11 +1004,9 @@ export default function Dashboard() {
                         onChange={e => setEditingValue(e.target.value)}
                         onBlur={() => commitToDraft('brand', editingValue)}
                         onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
-                        className="panel-sub"
-                        style={{ border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', width: '100%', padding: '1px 2px', fontFamily: 'var(--font)', marginTop: 3 }} />
-                    : <div className="panel-sub"
-                        onClick={() => startEdit('brand', selectedItem.brand)}
-                        style={role === 'admin' ? { cursor: 'text', marginTop: 3 } : { marginTop: 3 }}>
+                        className="panel-sub panel-inline-input mt-3" />
+                    : <div className={`panel-sub mt-3${role === 'admin' ? ' cursor-text' : ''}`}
+                        onClick={() => startEdit('brand', selectedItem.brand)}>
                         {(draft.brand ?? selectedItem.brand) || 'No brand'}
                       </div>}
                 </div>
@@ -1036,10 +1023,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Status</span>
                       {editingField === 'status'
                         ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); commitToDraft('status', e.target.value) }} onBlur={() => setEditingField(null)}
-                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
+                            className="panel-inline-select">
                             {['Available','In use','Maintenance','Retired'].map(o => <option key={o}>{o}</option>)}
                           </select>
-                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('status', selectedItem.status)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
+                        : <span className={`detail-val${role === 'admin' ? ' cursor-pointer' : ''}`} onClick={() => role === 'admin' && startEdit('status', selectedItem.status)}>
                             {(() => { const s = draft.status ?? selectedItem.status; return <span className={`badge ${STATUS_CLASS[s] ?? ''}`}>{s}</span> })()}
                           </span>}
                     </div>
@@ -1048,10 +1035,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Condition</span>
                       {editingField === 'condition'
                         ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); commitToDraft('condition', e.target.value) }} onBlur={() => setEditingField(null)}
-                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
+                            className="panel-inline-select">
                             {['Good','Fair','Poor'].map(o => <option key={o}>{o}</option>)}
                           </select>
-                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('condition', selectedItem.condition)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
+                        : <span className={`detail-val${role === 'admin' ? ' cursor-pointer' : ''}`} onClick={() => role === 'admin' && startEdit('condition', selectedItem.condition)}>
                             {(() => { const c = draft.condition ?? selectedItem.condition; return <span className={`badge ${COND_CLASS[c] ?? ''}`}>{c}</span> })()}
                           </span>}
                     </div>
@@ -1082,13 +1069,13 @@ export default function Dashboard() {
                               }
                             }}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
-                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
+                            className="panel-inline-input-r" />
                         : (() => {
                             const effectiveAssigned = draft.assigned_to ?? selectedItem.assigned_to
                             return effectiveAssigned
-                              ? <span className="detail-val" onClick={() => role === 'admin' && startEdit('assigned_to', selectedItem.assigned_to)} style={role === 'admin' ? { cursor: 'text' } : {}}>{effectiveAssigned}</span>
+                              ? <span className={`detail-val${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('assigned_to', selectedItem.assigned_to)}>{effectiveAssigned}</span>
                               : role === 'admin'
-                                ? <span onClick={() => startEdit('assigned_to', '')} style={{ fontSize: 12, color: 'var(--accent)', cursor: 'pointer', fontWeight: 500 }}>＋ Add new user</span>
+                                ? <span onClick={() => startEdit('assigned_to', '')} className="add-user-link">＋ Add new user</span>
                                 : <span className="detail-val">—</span>
                           })()}
                     </div>
@@ -1096,7 +1083,7 @@ export default function Dashboard() {
                     {/* Assigned date */}
                     <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
-                        ? <div style={{ flex: 1, minWidth: 0 }}>
+                        ? <div className="date-picker-wrap">
                             <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => {
                               setEditingValue(v)
                               if (v.length !== 10) return
@@ -1129,17 +1116,16 @@ export default function Dashboard() {
                               }
                             }} placeholder="DD-MM-YYYY" />
                           </div>
-                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                        : <span className={`detail-val mono${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('date_acquired', selectedItem.date_acquired)}>
                             {'date_acquired' in draft ? (draft.date_acquired || '—') : fmtDate(selectedItem.date_acquired)}
                           </span>}
                     </div>
 
                     {/* End Usage */}
                     {role === 'admin' && (
-                      <div style={{ paddingTop: 10 }}>
-                        <button type="button" onClick={() => endUsage(selectedItem.id)}
-                          style={{ fontFamily: 'var(--font)', fontSize: 11, fontWeight: 500, padding: '6px 12px', borderRadius: 'var(--radius)', border: '1px solid rgba(185,28,28,0.35)', background: '#fce8e8', color: '#b91c1c', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                          <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 11, height: 11 }}>
+                      <div className="end-usage-wrap">
+                        <button type="button" onClick={() => endUsage(selectedItem.id)} className="btn-danger">
+                          <svg viewBox="0 0 16 16" fill="currentColor" className="btn-danger-icon">
                             <path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 1.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM5.5 7.25h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1 0-1.5Z"/>
                           </svg>
                           End Usage
@@ -1155,10 +1141,10 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Category</span>
                       {editingField === 'category'
                         ? <select autoFocus value={editingValue} onChange={e => { setEditingValue(e.target.value); commitToDraft('category', e.target.value) }} onBlur={() => setEditingField(null)}
-                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font)' }}>
+                            className="panel-inline-select">
                             {['IT','Furniture','Equipment','Other'].map(o => <option key={o}>{o}</option>)}
                           </select>
-                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('category', selectedItem.category)} style={role === 'admin' ? { cursor: 'pointer' } : {}}>
+                        : <span className={`detail-val${role === 'admin' ? ' cursor-pointer' : ''}`} onClick={() => role === 'admin' && startEdit('category', selectedItem.category)}>
                             {draft.category ?? selectedItem.category}
                           </span>}
                     </div>
@@ -1169,8 +1155,8 @@ export default function Dashboard() {
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
                             onBlur={() => commitToDraft('department', editingValue)}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
-                            style={{ fontSize: 12, border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px', fontFamily: 'var(--font)' }} />
-                        : <span className="detail-val" onClick={() => role === 'admin' && startEdit('department', selectedItem.department)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            className="panel-inline-input-r" />
+                        : <span className={`detail-val${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('department', selectedItem.department)}>
                             {(draft.department ?? selectedItem.department) || '—'}
                           </span>}
                     </div>
@@ -1181,8 +1167,8 @@ export default function Dashboard() {
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
                             onBlur={() => commitToDraft('serial', editingValue)}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
-                            style={{ fontSize: 12, fontFamily: 'var(--mono)', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', background: 'transparent', color: 'var(--text)', width: '100%', textAlign: 'right', padding: '1px 2px' }} />
-                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('serial', selectedItem.serial)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                            className="panel-inline-input-mono" />
+                        : <span className={`detail-val mono${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('serial', selectedItem.serial)}>
                             {(draft.serial ?? selectedItem.serial) || '—'}
                           </span>}
                     </div>
@@ -1194,10 +1180,10 @@ export default function Dashboard() {
                     {/* Purchased date */}
                     <div className="detail-row"><span className="detail-key">Purchased date</span>
                       {editingField === 'purchased_date'
-                        ? <div style={{ flex: 1, minWidth: 0 }}>
+                        ? <div className="date-picker-wrap">
                             <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('purchased_date', v) }} placeholder="DD-MM-YYYY" />
                           </div>
-                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('purchased_date', selectedItem.purchased_date)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                        : <span className={`detail-val mono${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('purchased_date', selectedItem.purchased_date)}>
                             {'purchased_date' in draft ? (draft.purchased_date || '—') : fmtDate(selectedItem.purchased_date)}
                           </span>}
                     </div>
@@ -1205,10 +1191,10 @@ export default function Dashboard() {
                     {/* Warranty exp */}
                     <div className="detail-row"><span className="detail-key">Warranty exp.</span>
                       {editingField === 'warranty_exp'
-                        ? <div style={{ flex: 1, minWidth: 0 }}>
+                        ? <div className="date-picker-wrap">
                             <DatePicker value={editingValue} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('warranty_exp', v) }} placeholder="DD-MM-YYYY" />
                           </div>
-                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('warranty_exp', selectedItem.warranty_exp)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                        : <span className={`detail-val mono${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('warranty_exp', selectedItem.warranty_exp)}>
                             {'warranty_exp' in draft ? (draft.warranty_exp || '—') : fmtDate(selectedItem.warranty_exp)}
                           </span>}
                     </div>
@@ -1216,10 +1202,10 @@ export default function Dashboard() {
                     {/* Last checked */}
                     <div className="detail-row"><span className="detail-key">Last checked</span>
                       {editingField === 'last_checked'
-                        ? <div style={{ flex: 1, minWidth: 0 }}>
+                        ? <div className="date-picker-wrap">
                             <DatePicker value={editingValue} maxDate={todayDMY()} onChange={v => { setEditingValue(v); if (v.length === 10) commitToDraft('last_checked', v) }} placeholder="DD-MM-YYYY" />
                           </div>
-                        : <span className="detail-val mono" onClick={() => role === 'admin' && startEdit('last_checked', selectedItem.last_checked)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                        : <span className={`detail-val mono${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('last_checked', selectedItem.last_checked)}>
                             {'last_checked' in draft ? (draft.last_checked || '—') : fmtDate(selectedItem.last_checked)}
                           </span>}
                     </div>
@@ -1232,47 +1218,37 @@ export default function Dashboard() {
                           onChange={e => setEditingValue(e.target.value)}
                           onBlur={() => commitToDraft('remarks', editingValue)}
                           onKeyDown={e => { if (e.key === 'Escape') setEditingField(null) }}
-                          style={{ width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--accent)', outline: 'none', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', resize: 'vertical', marginTop: 4 }} />
-                      : <p className="panel-remarks" onClick={() => role === 'admin' && startEdit('remarks', selectedItem.remarks)} style={role === 'admin' ? { cursor: 'text' } : {}}>
+                          className="remarks-textarea" />
+                      : <p className={`panel-remarks${role === 'admin' ? ' remarks-view-admin' : ''}`} onClick={() => role === 'admin' && startEdit('remarks', selectedItem.remarks)}>
                           {(draft.remarks ?? selectedItem.remarks) || '—'}
                         </p>}
                   </div>
 
                   {/* Photos */}
                   <div className="panel-section">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <div className="panel-section-title" style={{ marginBottom: 0 }}>Photos</div>
+                    <div className="section-header">
+                      <div className="panel-section-title section-title-nowrap">Photos</div>
                       {role === 'admin' && (
                         <>
-                          <button
-                            type="button"
-                            onClick={() => photoInputRef.current?.click()}
-                            disabled={photoUploading}
-                            style={{ fontSize: 11, background: 'none', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font)' }}>
+                          <button type="button" onClick={() => photoInputRef.current?.click()} disabled={photoUploading} className="btn-sm">
                             {photoUploading ? 'Uploading…' : '+ Upload'}
                           </button>
-                          <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={uploadPhoto} />
+                          <input ref={photoInputRef} type="file" accept="image/*" className="hidden-input" onChange={uploadPhoto} />
                         </>
                       )}
                     </div>
                     {photosLoading ? (
-                      <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
+                      <p className="photos-loading">Loading…</p>
                     ) : photos.filter(p => !pendingPhotoDeletes.has(p.id)).length === 0 ? (
-                      <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No photos yet.</p>
+                      <p className="photos-loading">No photos yet.</p>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                      <div className="photos-grid">
                         {photos.filter(p => !pendingPhotoDeletes.has(p.id)).map(photo => (
-                          <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: '1px solid var(--border)' }}
-                            onClick={() => setLightbox(photo.url)}>
+                          <div key={photo.id} className="photo-thumb" onClick={() => setLightbox(photo.url)}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={photo.url} alt="" className="photo-img" />
                             {role === 'admin' && (
-                              <button
-                                type="button"
-                                onClick={e => { e.stopPropagation(); deletePhoto(photo) }}
-                                style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
-                                ✕
-                              </button>
+                              <button type="button" onClick={e => { e.stopPropagation(); deletePhoto(photo) }} className="photo-del">✕</button>
                             )}
                           </div>
                         ))}
@@ -1281,11 +1257,10 @@ export default function Dashboard() {
                   </div>
 
                   <div className="panel-section">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <div className="panel-section-title" style={{ marginBottom: 0 }}>User History</div>
+                    <div className="section-header">
+                      <div className="panel-section-title section-title-nowrap">User History</div>
                       {role === 'admin' && !uhAddOpen && (
-                        <button type="button" onClick={() => { setUhAddOpen(true); setEditingUh(null) }}
-                          style={{ fontSize: 11, background: 'none', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font)' }}>
+                        <button type="button" onClick={() => { setUhAddOpen(true); setEditingUh(null) }} className="btn-sm">
                           + Add
                         </button>
                       )}
@@ -1293,13 +1268,13 @@ export default function Dashboard() {
 
                     {/* Add form */}
                     {uhAddOpen && role === 'admin' && (
-                      <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="panel-form-box">
                         <input type="text" value={uhForm.user_name} placeholder="User name"
                           onChange={e => setUhForm(f => ({ ...f, user_name: e.target.value }))}
-                          style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          className="panel-form-input" />
+                        <div className="panel-form-fields">
                           <div>
-                            <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
+                            <div className="panel-form-label">From</div>
                             <DatePicker value={uhForm.date_from} maxDate={todayDMY()}
                               onChange={v => setUhForm(f => {
                                 const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
@@ -1307,25 +1282,23 @@ export default function Dashboard() {
                               })} placeholder="DD-MM-YYYY" />
                           </div>
                           <div>
-                            <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
+                            <div className="panel-form-label">To</div>
                             <DatePicker value={uhForm.date_to} minDate={uhForm.date_from || undefined}
                               maxDate={userHistory.find(h => !h.date_to) ? toFormDate(userHistory.find(h => !h.date_to)!.date_from) : todayDMY()}
                               onChange={v => setUhForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
+                        <div className="panel-form-actions">
                           <button onClick={() => { setUhAddOpen(false); setUhForm({ user_name: '', date_from: '', date_to: '' }) }}
-                            className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                            className="btn panel-form-btn">Cancel</button>
                           <button onClick={addUserHistory} disabled={!uhForm.user_name.trim() || !uhForm.date_from || !uhForm.date_to}
-                            className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
-                            Add
-                          </button>
+                            className="btn btn-primary panel-form-btn">Add</button>
                         </div>
                       </div>
                     )}
 
-                    {uhLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
-                      : userHistory.filter(h => h._staged !== 'delete').length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet.</p>
+                    {uhLoading ? <p className="photos-loading">Loading…</p>
+                      : userHistory.filter(h => h._staged !== 'delete').length === 0 ? <p className="photos-loading">No history yet.</p>
                       : userHistory.filter(h => h._staged !== 'delete').map((h, idx, visible) => {
                         const isOpen = !h.date_to
                         const newerEntry = idx > 0 ? visible[idx - 1] : null
@@ -1335,13 +1308,13 @@ export default function Dashboard() {
                           <div key={h.id}>
                             {editingUh === h.id && !isOpen ? (
                               /* Edit form — past entries only */
-                              <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <div className="panel-form-box">
                                 <input type="text" value={uhEditForm.user_name} placeholder="User name"
                                   onChange={e => setUhEditForm(f => ({ ...f, user_name: e.target.value }))}
-                                  style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%' }} />
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                  className="panel-form-input" />
+                                <div className="panel-form-fields">
                                   <div>
-                                    <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>From</div>
+                                    <div className="panel-form-label">From</div>
                                     <DatePicker value={uhEditForm.date_from} maxDate={todayDMY()}
                                       onChange={v => setUhEditForm(f => {
                                         const clearTo = f.date_to && toDBDate(v) > toDBDate(f.date_to)
@@ -1349,23 +1322,23 @@ export default function Dashboard() {
                                       })} placeholder="DD-MM-YYYY" />
                                   </div>
                                   <div>
-                                    <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>To</div>
+                                    <div className="panel-form-label">To</div>
                                     <DatePicker value={uhEditForm.date_to} minDate={uhEditForm.date_from || undefined} maxDate={overlapMax}
                                       onChange={v => setUhEditForm(f => ({ ...f, date_to: v }))} placeholder="DD-MM-YYYY" />
                                   </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: 6 }}>
+                                <div className="panel-form-actions">
                                   <button onClick={() => deleteUhEntry(h.id)}
-                                    className="btn" style={{ height: 32, fontSize: 12, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 10px' }}>Delete</button>
+                                    className="btn btn-danger-sm">Delete</button>
                                   <button onClick={() => setEditingUh(null)}
-                                    className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                                    className="btn panel-form-btn">Cancel</button>
                                   <button onClick={() => saveUhEntry(h.id)} disabled={!uhEditForm.user_name.trim()}
-                                    className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                                    className="btn btn-primary panel-form-btn">Save</button>
                                 </div>
                               </div>
                             ) : (
                               /* Display row */
-                              <div className="detail-row"
+                              <div className={`detail-row uh-entry${isEditable ? ' uh-entry-admin' : ''}${h._staged ? ' uh-entry-staged' : ''}`}
                                 onClick={() => {
                                   if (isEditable) {
                                     setEditingUh(h.id); setUhAddOpen(false)
@@ -1373,14 +1346,13 @@ export default function Dashboard() {
                                   }
                                 }}
                                 onMouseEnter={e => { if (isEditable) (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                                style={{ alignItems: 'center', cursor: isEditable ? 'pointer' : 'default', borderRadius: 6, padding: '6px 6px', margin: '0 -6px', opacity: h._staged ? 0.75 : 1 }}>
-                                <span className="detail-key" style={{ fontWeight: 500, color: 'var(--text)' }}>
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}>
+                                <span className="detail-key uh-user">
                                   {h.user_name}
-                                  {isOpen && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#276b3a', background: '#e6f4ea', padding: '1px 5px', borderRadius: 99 }}>current</span>}
-                                  {h._staged && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#92400e', background: '#fef3c7', padding: '1px 5px', borderRadius: 99 }}>unsaved</span>}
+                                  {isOpen && <span className="badge-current">current</span>}
+                                  {h._staged && <span className="badge-unsaved">unsaved</span>}
                                 </span>
-                                <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text-hint)', textAlign: 'right' }}>
+                                <span className="uh-dates">
                                   {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
                                 </span>
                               </div>
@@ -1391,11 +1363,10 @@ export default function Dashboard() {
                   </div>
 
                   <div className="panel-section">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <div className="panel-section-title" style={{ marginBottom: 0 }}>Maintenance Log</div>
+                    <div className="section-header">
+                      <div className="panel-section-title section-title-nowrap">Maintenance Log</div>
                       {role === 'admin' && !logAddOpen && (
-                        <button type="button" onClick={() => { setLogAddOpen(true); setEditingLog(null) }}
-                          style={{ fontSize: 11, background: 'none', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '3px 9px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font)' }}>
+                        <button type="button" onClick={() => { setLogAddOpen(true); setEditingLog(null) }} className="btn-sm">
                           + Add
                         </button>
                       )}
@@ -1403,28 +1374,26 @@ export default function Dashboard() {
 
                     {/* Add form */}
                     {logAddOpen && role === 'admin' && (
-                      <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="panel-form-box">
                         <textarea value={logInput} rows={3} placeholder="Describe the maintenance…"
                           onChange={e => setLogInput(e.target.value)}
-                          style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%', resize: 'vertical' }} />
+                          className="log-form-textarea" />
                         <div>
-                          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>Date</div>
+                          <div className="panel-form-label">Date</div>
                           <DatePicker value={logAddDate} onChange={setLogAddDate} placeholder="DD-MM-YYYY" />
                         </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
+                        <div className="panel-form-actions">
                           <button onClick={() => { setLogAddOpen(false); setLogInput(''); setLogAddDate('') }}
-                            className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                            className="btn panel-form-btn">Cancel</button>
                           <button onClick={addLog} disabled={!logInput.trim() || !userId}
-                            className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>
-                            Add
-                          </button>
+                            className="btn btn-primary panel-form-btn">Add</button>
                         </div>
                       </div>
                     )}
 
-                    {logsLoading ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>Loading…</p>
-                      : logs.filter(l => l._staged !== 'delete').length === 0 ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No entries yet.</p>
-                      : <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {logsLoading ? <p className="photos-loading">Loading…</p>
+                      : logs.filter(l => l._staged !== 'delete').length === 0 ? <p className="photos-loading">No entries yet.</p>
+                      : <div className="ml-list">
                           {logs.filter(l => l._staged !== 'delete').slice().sort((a, b) => {
                             const da = a.log_date || a.created_at || ''
                             const db = b.log_date || b.created_at || ''
@@ -1432,39 +1401,37 @@ export default function Dashboard() {
                           }).map((log, i, visible) => (
                             <div key={log.id}>
                               {editingLog === log.id ? (
-                                <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <div className="panel-form-box">
                                   <textarea value={logEditValue} rows={3}
                                     onChange={e => setLogEditValue(e.target.value)}
-                                    style={{ fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none', width: '100%', resize: 'vertical' }} />
+                                    className="log-form-textarea" />
                                   <div>
-                                    <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, color: 'var(--text-hint)', marginBottom: 3 }}>Date</div>
+                                    <div className="panel-form-label">Date</div>
                                     <DatePicker value={logEditDate} onChange={setLogEditDate} placeholder="DD-MM-YYYY" />
                                   </div>
-                                  <p style={{ fontSize: 10, color: 'var(--text-hint)', fontFamily: 'var(--mono)', margin: 0 }}>
-                                    logged by {log.logged_by}
-                                  </p>
-                                  <div style={{ display: 'flex', gap: 6 }}>
+                                  <p className="log-meta">logged by {log.logged_by}</p>
+                                  <div className="panel-form-actions">
                                     <button onClick={() => deleteLogEntry(log.id)}
-                                      className="btn" style={{ height: 32, fontSize: 12, color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)', padding: '0 10px' }}>Delete</button>
+                                      className="btn btn-danger-sm">Delete</button>
                                     <button onClick={() => setEditingLog(null)}
-                                      className="btn" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Cancel</button>
+                                      className="btn panel-form-btn">Cancel</button>
                                     <button onClick={() => saveLogEntry(log.id)} disabled={!logEditValue.trim()}
-                                      className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', height: 32, fontSize: 12 }}>Save</button>
+                                      className="btn btn-primary panel-form-btn">Save</button>
                                   </div>
                                 </div>
                               ) : (
                                 <div
+                                  className={`ml-entry-wrap${role === 'admin' ? ' cursor-pointer' : ''}${log._staged ? ' ml-entry-staged' : ''}`}
                                   onClick={() => { if (role === 'admin') { setEditingLog(log.id); setLogAddOpen(false); setLogEditValue(log.description); setLogEditDate(toFormDate(log.log_date)) } }}
                                   onMouseEnter={e => { if (role === 'admin') (e.currentTarget as HTMLElement).style.background = 'var(--surface2)' }}
-                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                                  style={{ display: 'flex', gap: 10, position: 'relative', cursor: role === 'admin' ? 'pointer' : 'default', borderRadius: 6, padding: '4px 6px', margin: '0 -6px', opacity: log._staged ? 0.75 : 1 }}>
-                                  {i < visible.length - 1 && <div style={{ position: 'absolute', left: 11, top: 18, bottom: 0, width: 1, background: 'var(--border)' }} />}
-                                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: log._staged ? '#d97706' : 'var(--accent)', flexShrink: 0, marginTop: 5, zIndex: 1 }} />
-                                  <div style={{ flex: 1, paddingBottom: 12 }}>
-                                    <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>{log.description}</p>
-                                    <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 3, fontFamily: 'var(--mono)' }}>
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}>
+                                  {i < visible.length - 1 && <div className="uh-connector" />}
+                                  <div className={`uh-dot${log._staged ? ' uh-dot-staged' : ''}`} />
+                                  <div className="ml-content">
+                                    <p className="ml-desc">{log.description}</p>
+                                    <p className="ml-meta">
                                       {log.log_date ? fmtDate(log.log_date) : new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
-                                      {log._staged && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: '#92400e', background: '#fef3c7', padding: '1px 5px', borderRadius: 99 }}>unsaved</span>}
+                                      {log._staged && <span className="badge-unsaved">unsaved</span>}
                                     </p>
                                   </div>
                                 </div>
@@ -1478,12 +1445,11 @@ export default function Dashboard() {
               {/* Panel footer */}
               {role === 'admin' && (
                 <div className="panel-footer">
-                  <button className="btn" style={{ color: '#b91c1c', borderColor: 'rgba(185,28,28,0.3)' }} onClick={() => deleteItem(selectedItem)}>Delete</button>
+                  <button className="btn panel-delete-btn" onClick={() => deleteItem(selectedItem)}>Delete</button>
                   <button
-                    className={`btn${isDirty ? ' btn-primary' : ''}`}
+                    className={`btn${isDirty ? ' btn-primary' : ' panel-save-btn-disabled'}`}
                     onClick={saveDraft}
-                    disabled={!isDirty || panelSaving}
-                    style={!isDirty ? { opacity: 0.45, cursor: 'default' } : {}}>
+                    disabled={!isDirty || panelSaving}>
                     {panelSaving ? 'Saving…' : 'Save'}
                   </button>
                 </div>
@@ -1532,15 +1498,14 @@ export default function Dashboard() {
                 <DatePicker value={form.date_acquired} maxDate={todayDMY()} onChange={v => setForm(f => ({ ...f, date_acquired: v }))} />
               </div>
               {editId && (
-                <div className="form-field full" style={{ marginTop: -6 }}>
-                  <button type="button" onClick={() => endUsage()}
-                    style={{ fontFamily: 'var(--font)', fontSize: 12, fontWeight: 500, padding: '8px 16px', height: 36, borderRadius: 'var(--radius)', border: '1px solid rgba(185,28,28,0.35)', background: '#fce8e8', color: '#b91c1c', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content' }}>
-                    <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 13, height: 13 }}>
+                <div className="form-field full">
+                  <button type="button" onClick={() => endUsage()} className="btn-danger">
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="btn-danger-icon">
                       <path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 1.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM5.5 7.25h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1 0-1.5Z"/>
                     </svg>
                     End Usage
                   </button>
-                  <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 4 }}>Closes current assignment and clears assigned fields.</p>
+                  <p className="photos-loading">Closes current assignment and clears assigned fields.</p>
                 </div>
               )}
               <div className="form-field"><label>Purchased date</label>
@@ -1554,22 +1519,22 @@ export default function Dashboard() {
             </div>
 
             {editId && (
-              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+              <div className="modal-section-extra">
+                <hr className="modal-hr" />
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', marginBottom: 10 }}>User History</div>
+                  <div className="modal-subsection-label">User History</div>
                   {userHistory.length === 0
-                    ? <p style={{ fontSize: 11, color: 'var(--text-hint)' }}>No history yet — will be created on save.</p>
-                    : <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    ? <p className="photos-loading">No history yet — will be created on save.</p>
+                    : <div className="uh-modal-list">
                         {userHistory.map(h => {
                           const isOpen = !h.date_to
                           return (
-                            <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, padding: '5px 0', borderBottom: '1px solid var(--border)' }}>
-                              <span style={{ fontWeight: 500 }}>
+                            <div key={h.id} className="uh-modal-entry">
+                              <span className="uh-modal-name">
                                 {h.user_name}
-                                {isOpen && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: '#276b3a', background: '#e6f4ea', padding: '1px 5px', borderRadius: 99 }}>current</span>}
+                                {isOpen && <span className="badge-current">current</span>}
                               </span>
-                              <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-hint)' }}>
+                              <span className="uh-modal-dates">
                                 {fmtDate(h.date_from)}{h.date_to ? ` → ${fmtDate(h.date_to)}` : ' → present'}
                               </span>
                             </div>
@@ -1577,19 +1542,19 @@ export default function Dashboard() {
                         })}
                       </div>
                   }
-                  <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 8 }}>Manage via Assigned To / Assigned Date above, or the detail panel.</p>
+                  <p className="panel-remarks-note">Manage via Assigned To / Assigned Date above, or the detail panel.</p>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', marginBottom: 10 }}>Maintenance Log</div>
+                  <div className="modal-subsection-label">Maintenance Log</div>
                   {logs.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 10 }}>
+                    <div className="modal-log-list">
                       {logs.map((log, i) => (
-                        <div key={log.id} style={{ display: 'flex', gap: 10, paddingBottom: 10, position: 'relative' }}>
-                          {i < logs.length - 1 && <div style={{ position: 'absolute', left: 5, top: 13, bottom: 0, width: 1, background: 'var(--border)' }} />}
-                          <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 3, zIndex: 1 }} />
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: 12, lineHeight: 1.5 }}>{log.description}</p>
-                            <p style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 2, fontFamily: 'var(--mono)' }}>
+                        <div key={log.id} className="modal-log-entry">
+                          {i < logs.length - 1 && <div className="modal-log-connector" />}
+                          <div className="modal-log-dot" />
+                          <div className="modal-log-content">
+                            <p className="modal-log-desc">{log.description}</p>
+                            <p className="modal-log-meta">
                               {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {log.logged_by}
                             </p>
                           </div>
@@ -1597,10 +1562,10 @@ export default function Dashboard() {
                       ))}
                     </div>
                   )}
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="modal-add-log-row">
                     <input type="text" value={logInput} onChange={e => setLogInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLog()}
                       placeholder="Add a log entry…"
-                      style={{ flex: 1, fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'var(--font)', outline: 'none' }} />
+                      className="modal-log-input" />
                     <button onClick={addLog} disabled={!logInput.trim()} className="btn btn-primary">Add log</button>
                   </div>
                 </div>
@@ -1617,51 +1582,51 @@ export default function Dashboard() {
 
       {/* Lightbox */}
       {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+        <div onClick={() => setLightbox(null)} className="lightbox-overlay">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 10, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }} onClick={e => e.stopPropagation()} />
-          <button onClick={() => setLightbox(null)} style={{ position: 'absolute', top: 20, right: 24, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 20, width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <img src={lightbox} alt="" className="lightbox-img" onClick={e => e.stopPropagation()} />
+          <button onClick={() => setLightbox(null)} className="lightbox-close">✕</button>
         </div>
       )}
 
       {/* CSV Import preview modal */}
       {importOpen && (
         <div className="modal-overlay open" onClick={e => { if (e.target === e.currentTarget) setImportOpen(false) }}>
-          <div className="modal" style={{ width: 620, maxWidth: '95vw' }}>
+          <div className="modal import-modal">
             <div className="modal-header">
               <h2>Import CSV {importRows.length > 0 ? `— ${importRows.length} items found` : ''}</h2>
               <button className="modal-close" onClick={() => setImportOpen(false)}>✕</button>
             </div>
-            {importError && <div className="auth-error" style={{ marginBottom: 16 }}>{importError}</div>}
+            {importError && <div className="auth-error">{importError}</div>}
             {importRows.length > 0 ? (
-              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', maxHeight: 300, overflowY: 'auto', marginBottom: 14 }}>
-                <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--surface2)', position: 'sticky', top: 0 }}>
+              <div className="import-table-wrap">
+                <table className="import-table">
+                  <thead className="import-thead">
+                    <tr>
                       {['Item Name', 'Brand', 'Status', 'Assigned To', 'Assigned Date', 'Category'].map(h => (
-                        <th key={h} style={{ padding: '7px 10px', textAlign: 'left', fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-hint)', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} className="import-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {importRows.map((r, i) => (
-                      <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
-                        <td style={{ padding: '6px 10px', fontWeight: 500 }}>{r.name}</td>
-                        <td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{r.brand || '—'}</td>
-                        <td style={{ padding: '6px 10px' }}><span className={`badge ${STATUS_CLASS[r.status ?? 'Available'] ?? ''}`}>{r.status}</span></td>
-                        <td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{r.assigned_to || '—'}</td>
-                        <td style={{ padding: '6px 10px', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-muted)' }}>{r.date_acquired || '—'}</td>
-                        <td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{r.category || '—'}</td>
+                      <tr key={i} className="import-tr">
+                        <td className="import-td">{r.name}</td>
+                        <td className="import-td-brand">{r.brand || '—'}</td>
+                        <td className="import-td"><span className={`badge ${STATUS_CLASS[r.status ?? 'Available'] ?? ''}`}>{r.status}</span></td>
+                        <td className="import-td-brand">{r.assigned_to || '—'}</td>
+                        <td className="import-td-mono">{r.date_acquired || '—'}</td>
+                        <td className="import-td-brand">{r.category || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-hint)', fontSize: 13 }}>No valid rows found.</div>
+              <div className="import-empty">No valid rows found.</div>
             )}
-            <p style={{ fontSize: 11, color: 'var(--text-hint)', marginBottom: 16, lineHeight: 1.6 }}>
-              Expected columns: <span style={{ fontFamily: 'var(--mono)' }}>Item Name, Brand, Serial Number, Status, Condition, Assigned To, Category, Department, Assigned Date, Warranty Exp, Last Checked, Remarks</span>
+            <p className="import-hint">
+              Expected columns: <span className="import-mono-span">Item Name, Brand, Serial Number, Status, Condition, Assigned To, Category, Department, Assigned Date, Warranty Exp, Last Checked, Remarks</span>
             </p>
             <div className="modal-footer">
               <button className="btn" onClick={() => setImportOpen(false)}>Cancel</button>
