@@ -995,6 +995,44 @@ input[type="checkbox"] {
 .th-number { width: 48px; cursor: default; color: var(--text-hint); }
 
 /* Keyboard shortcut bar */
+/* ── Pagination — Option C ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 2px 0;
+  font-size: 12px;
+}
+.pg-info { color: var(--text-hint); }
+.pg-info strong { color: var(--text); font-weight: 600; }
+.pg-controls { display: flex; align-items: center; gap: 10px; }
+.pg-page-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.pg-page-label strong { color: var(--text); font-weight: 600; }
+.pg-btn {
+  height: 30px; padding: 0 14px;
+  font-size: 12px; font-weight: 600;
+  font-family: var(--font);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+}
+.pg-btn:hover:not(:disabled) {
+  background: #1C1917;
+  color: #FEFCF9;
+  border-color: #1C1917;
+}
+[data-theme="dark"] .pg-btn:hover:not(:disabled) {
+  background: #FEFCF9;
+  color: #1C1917;
+  border-color: #FEFCF9;
+}
+.pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
 .shortcut-bar { display: flex; gap: 14px; flex-wrap: wrap; padding: 10px 2px 0; font-size: 11px; color: var(--text-hint); }
 .shortcut-item { display: flex; align-items: center; gap: 4px; }
 .shortcut-key {

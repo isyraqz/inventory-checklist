@@ -147,6 +147,7 @@ export default function Dashboard() {
   const [importError, setImportError] = useState('')
   const [importing, setImporting] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
+  const [currentPage, setCurrentPage] = useState(1)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState('')
   const [photos, setPhotos] = useState<ItemPhoto[]>([])
@@ -222,6 +223,9 @@ export default function Dashboard() {
       setLogs([]); setUserHistory([]); setPhotos([])
     }
   }, [selectedItem, loadLogs, loadUserHistory, loadPhotos])
+
+  // Reset to page 1 when search or filters change
+  useEffect(() => { setCurrentPage(1) }, [search, filterCat, filterStatus, sortKey, sortDir, showRetired])
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
@@ -745,6 +749,13 @@ export default function Dashboard() {
   // Keep snap updated for keyboard handler
   snap.current = { selectedItem, role, modalOpen, importOpen, filtered }
 
+  // Reset to page 1 whenever the visible list changes
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(currentPage, totalPages)
+  const pageStart = (safePage - 1) * PAGE_SIZE
+  const paginatedItems = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+
   const isDirty =
     Object.keys(draft).length > 0 ||
     userHistory.some(h => h._staged) ||
@@ -943,9 +954,11 @@ export default function Dashboard() {
                       <p>No items found. Try adjusting your search or filters.</p>
                     </div>
                   </td></tr>
-                ) : filtered.map((item, idx) => (
+                ) : paginatedItems.map((item, idx) => {
+                  const globalIdx = pageStart + idx
+                  return (
                   <tr key={item.id}
-                    onClick={() => { setSelectedItem(prev => prev?.id === item.id ? null : item); setFocusedIdx(idx) }}
+                    onClick={() => { setSelectedItem(prev => prev?.id === item.id ? null : item); setFocusedIdx(globalIdx) }}
                     className={[
                       role === 'admin' && auditChecked.has(item.id) ? 'row-checked' : '',
                       selectedItem?.id === item.id ? 'row-selected' : '',
@@ -956,7 +969,7 @@ export default function Dashboard() {
                         <input type="checkbox" checked={auditChecked.has(item.id)} onChange={() => toggleItem(item.id)} />
                       </td>
                     )}
-                    <td className="col-no">{String(idx + 1).padStart(3, '0')}</td>
+                    <td className="col-no">{String(globalIdx + 1).padStart(3, '0')}</td>
                     <td className="item-name">{item.name}</td>
                     <td>{item.brand || <span className="text-hint">—</span>}</td>
                     <td>{item.assigned_to || <span className="text-hint">—</span>}</td>
@@ -966,10 +979,35 @@ export default function Dashboard() {
                       {item.remarks || <span className="text-hint">—</span>}
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
             </div>{/* end table-scroll */}
+
+          {/* Pagination — Option C */}
+          {filtered.length > 0 && (
+            <div className="pagination">
+              <span className="pg-info">
+                Showing <strong>{pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, filtered.length)}</strong> of <strong>{filtered.length}</strong> item{filtered.length !== 1 ? 's' : ''}
+              </span>
+              <div className="pg-controls">
+                <button
+                  className="pg-btn"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={safePage === 1}>
+                  ← Prev
+                </button>
+                <span className="pg-page-label">Page <strong>{safePage}</strong> of {totalPages}</span>
+                <button
+                  className="pg-btn"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}>
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
           </div>
 
           {/* Keyboard shortcut hint */}
