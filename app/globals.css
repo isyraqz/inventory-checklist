@@ -140,9 +140,9 @@ body::after {
 }
 
 [data-theme="dark"] .app-header {
-  background: #FEFCF9;
-  border-bottom-color: rgba(28,25,23,0.1);
-  box-shadow: 0 1px 0 rgba(28,25,23,0.08), 0 2px 8px rgba(28,25,23,0.1);
+  background: linear-gradient(180deg, #3A3F47 0%, #2C3038 100%);
+  border-bottom-color: rgba(255,255,255,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -167,7 +167,7 @@ body::after {
   color: #F5F0E8;
   transition: color 0.25s;
 }
-[data-theme="dark"] .logo { color: #1C1917; }
+[data-theme="dark"] .logo { color: #E5E7EB; }
 
 /* Logo SVG — always on dark header in light, dark header inverted in dark */
 .logo-svg { flex-shrink: 0; }
@@ -175,9 +175,9 @@ body::after {
 .logo-svg path:nth-child(2) { stroke: var(--accent); fill: none; }
 .logo-svg path:last-child { stroke: rgba(245,240,232,0.45); fill: none; }
 
-[data-theme="dark"] .logo-svg path:first-child { fill: rgba(28,25,23,0.12); stroke: var(--accent); }
+[data-theme="dark"] .logo-svg path:first-child { fill: rgba(255,255,255,0.08); stroke: var(--accent); }
 [data-theme="dark"] .logo-svg path:nth-child(2) { stroke: var(--accent); }
-[data-theme="dark"] .logo-svg path:last-child { stroke: rgba(28,25,23,0.35); }
+[data-theme="dark"] .logo-svg path:last-child { stroke: rgba(255,255,255,0.25); }
 
 .logo-text { /* inherits logo color */ }
 
@@ -200,13 +200,13 @@ body::after {
   border-color: var(--accent);
 }
 [data-theme="dark"] .theme-toggle {
-  background: rgba(28,25,23,0.07);
-  border-color: rgba(28,25,23,0.15);
-  color: #78716C;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+  color: #9CA3AF;
 }
 [data-theme="dark"] .theme-toggle:hover {
-  background: rgba(28,25,23,0.13);
-  color: #1C1917;
+  background: rgba(255,255,255,0.12);
+  color: #E5E7EB;
   border-color: var(--accent);
 }
 
@@ -226,9 +226,9 @@ body::after {
   transition: color 0.25s, background 0.25s;
 }
 [data-theme="dark"] .user-email {
-  color: #44403C;
-  background: rgba(28,25,23,0.07);
-  border-color: rgba(28,25,23,0.14);
+  color: #D1D5DB;
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
 }
 
 /* Sign out button in header */
@@ -244,14 +244,14 @@ body::after {
   box-shadow: none;
 }
 [data-theme="dark"] .app-header .btn {
-  background: rgba(28,25,23,0.07);
-  color: #44403C;
-  border-color: rgba(28,25,23,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #D1D5DB;
+  border-color: rgba(255,255,255,0.10);
 }
 [data-theme="dark"] .app-header .btn:hover {
-  background: rgba(28,25,23,0.13);
-  color: #1C1917;
-  border-color: rgba(28,25,23,0.25);
+  background: rgba(255,255,255,0.12);
+  color: #F9FAFB;
+  border-color: rgba(255,255,255,0.2);
   box-shadow: none;
 }
 
@@ -271,9 +271,9 @@ body::after {
   flex-shrink: 0;
 }
 [data-theme="dark"] .admin-chip {
-  color: #8B4513;
-  background: rgba(28,25,23,0.1);
-  border-color: rgba(28,25,23,0.2);
+  color: #C46A30;
+  background: rgba(196,106,48,0.15);
+  border-color: rgba(196,106,48,0.25);
 }
 
 /* ── Layout ── */
