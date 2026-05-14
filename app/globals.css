@@ -29,8 +29,8 @@
   /* status */
   --status-total:      #44403C;
   --status-inuse:      #92400E;
-  --status-avail:      #14532D;
-  --status-maint:      #991B1B;
+  --status-avail:      #16A34A;
+  --status-maint:      #DC2626;
   --status-total-bg:   rgba(28,25,23,0.06);
   --status-inuse-bg:   #FEF3C7;
   --status-avail-bg:   #DCFCE7;
@@ -66,8 +66,8 @@
   /* status — vivid on dark */
   --status-total:      #C9C0B5;
   --status-inuse:      #FBBF24;
-  --status-avail:      #34D399;
-  --status-maint:      #F87171;
+  --status-avail:      #4ADE80;
+  --status-maint:      #FB923C;
   --status-total-bg:   rgba(255,255,255,0.05);
   --status-inuse-bg:   rgba(251,191,36,0.1);
   --status-avail-bg:   rgba(52,211,153,0.1);
@@ -475,6 +475,33 @@ tbody tr.row-selected td:first-child { box-shadow: inset 3px 0 0 #8B4513; }
 .stat-card-inuse .stat-label::before { background: var(--status-total); }
 .stat-card-avail .stat-label::before { background: var(--status-avail); }
 .stat-card-maint .stat-label::before { background: var(--status-maint); }
+
+/* Available — tinted background + top accent border + coloured label */
+.stat-card-avail {
+  background: rgba(22,163,74,0.06) !important;
+  border-color: rgba(22,163,74,0.2) !important;
+  border-top: 3px solid #16A34A !important;
+}
+.stat-card-avail .stat-label { color: var(--status-avail); }
+
+/* Maintenance — tinted background + top accent border + coloured label */
+.stat-card-maint {
+  background: rgba(220,38,38,0.06) !important;
+  border-color: rgba(220,38,38,0.2) !important;
+  border-top: 3px solid #DC2626 !important;
+}
+.stat-card-maint .stat-label { color: var(--status-maint); }
+
+[data-theme="dark"] .stat-card-avail {
+  background: rgba(74,222,128,0.07) !important;
+  border-color: rgba(74,222,128,0.2) !important;
+  border-top-color: #4ADE80 !important;
+}
+[data-theme="dark"] .stat-card-maint {
+  background: rgba(251,146,60,0.07) !important;
+  border-color: rgba(251,146,60,0.2) !important;
+  border-top-color: #FB923C !important;
+}
 
 /* Checked In card — highlighted when items are ticked */
 .stat-card-active {
