@@ -15,8 +15,12 @@
   --accent-fg:    #FFFFFF;
   --accent-hover: #78450A;
   --accent-glow:  rgba(161,98,7,0.2);
-  --fg:           #1C1917;
+  --fg:           #000000;
   --fg-text:      #FAFAF9;
+  --header-text:  rgba(255,255,255,0.9);
+  --header-muted: rgba(255,255,255,0.5);
+  --header-border:rgba(255,255,255,0.15);
+  --header-tint:  rgba(255,255,255,0.07);
   --destructive:  #DC2626;
   --radius:       6px;
   --radius-lg:    8px;
@@ -58,8 +62,12 @@
   --accent-fg:    #FFFFFF;
   --accent-hover: #F59E0B;
   --accent-glow:  rgba(217,119,6,0.25);
-  --fg:           #1C1917;
-  --fg-text:      #EDE9E4;
+  --fg:           #FFFFFF;
+  --fg-text:      #1C1917;
+  --header-text:  rgba(28,25,23,0.9);
+  --header-muted: rgba(28,25,23,0.5);
+  --header-border:rgba(28,25,23,0.15);
+  --header-tint:  rgba(28,25,23,0.06);
   --destructive:  #F87171;
   --shadow:       0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
   --shadow-md:    0 4px 20px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4);
@@ -95,8 +103,7 @@ body {
 /* ── Header ── */
 .app-header {
   background: var(--fg);
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--header-border);
   padding: 0 2rem;
   height: 60px;
   display: flex;
@@ -105,8 +112,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 2px 16px rgba(28,25,23,0.3), 0 1px 0 rgba(255,255,255,0.04);
-  transition: background 0.25s;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
 }
 
 /* Gold rule under header */
@@ -126,7 +133,8 @@ body {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #FAFAF9;
+  color: var(--header-text);
+  transition: color 0.25s;
 }
 .logo-mark {
   width: 30px; height: 30px;
@@ -134,34 +142,35 @@ body {
   border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 .logo-mark svg { width: 14px; height: 14px; fill: #FFFFFF; }
 .header-right { display: flex; align-items: center; gap: 8px; }
 .theme-toggle {
   width: 34px; height: 34px;
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid var(--header-border);
   border-radius: var(--radius);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.6);
+  background: var(--header-tint);
+  color: var(--header-muted);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 15px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.25s;
 }
-.theme-toggle:hover { background: rgba(255,255,255,0.12); color: #FFFFFF; }
+.theme-toggle:hover { background: var(--header-border); color: var(--header-text); }
 .user-email {
   font-size: 11px;
   font-family: var(--mono);
-  color: rgba(255,255,255,0.5);
+  color: var(--header-muted);
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  background: rgba(255,255,255,0.07);
+  background: var(--header-tint);
   padding: 4px 10px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--header-border);
+  transition: color 0.25s, background 0.25s, border-color 0.25s;
 }
 
 /* ── Layout ── */
