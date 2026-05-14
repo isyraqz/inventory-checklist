@@ -90,7 +90,8 @@ body {
     radial-gradient(ellipse 60% 50% at 0%   0%,   rgba(196,106,48,0.50) 0%, transparent 65%),
     radial-gradient(ellipse 60% 50% at 100% 0%,   rgba(139,69,19,0.35)  0%, transparent 65%),
     radial-gradient(ellipse 60% 50% at 0%   100%, rgba(139,69,19,0.35)  0%, transparent 65%),
-    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(196,106,48,0.45) 0%, transparent 65%);
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(196,106,48,0.45) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 40% at 50%  50%,  rgba(196,106,48,0.88) 0%, transparent 70%);
   color: var(--text);
   min-height: 100vh;
   transition: background-color 0.25s, color 0.25s;
@@ -102,7 +103,8 @@ body {
     radial-gradient(ellipse 60% 50% at 0%   0%,   rgba(30,58,138,0.60)  0%, transparent 65%),
     radial-gradient(ellipse 60% 50% at 100% 0%,   rgba(15,23,42,0.70)   0%, transparent 65%),
     radial-gradient(ellipse 60% 50% at 0%   100%, rgba(37,99,235,0.25)  0%, transparent 65%),
-    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(30,58,138,0.55)  0%, transparent 65%);
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(30,58,138,0.55)  0%, transparent 65%),
+    radial-gradient(ellipse 45% 40% at 50%  50%,  rgba(37,99,235,0.80)  0%, transparent 70%);
 }
 body::before {
   content: '';
