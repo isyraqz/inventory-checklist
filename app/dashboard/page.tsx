@@ -806,7 +806,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="app-header">
         <div className="logo">
-          <span className="logo-text">Verus Virtus — Inventory Checklist</span>
+          <span className="logo-text">Verus Virtus — Inventory</span>
         </div>
         <div className="header-right">
           {userEmail && (
