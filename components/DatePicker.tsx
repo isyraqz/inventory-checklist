@@ -8,6 +8,8 @@ interface Props {
   placeholder?: string
   minDate?: string    // DD-MM-YYYY — days before this are disabled
   maxDate?: string    // DD-MM-YYYY — days after this are disabled
+  autoOpen?: boolean  // open calendar immediately on mount
+  onClose?: () => void // called when calendar closes without selection
 }
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -23,7 +25,7 @@ function parseDate(dmy: string): Date | null {
 
 function fmt2(n: number) { return String(n).padStart(2, '0') }
 
-export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY', minDate, maxDate }: Props) {
+export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY', minDate, maxDate, autoOpen, onClose }: Props) {
   const [open, setOpen]           = useState(false)
   const [yearPicker, setYearPicker] = useState(false)
   const [viewYear, setViewYear]   = useState(new Date().getFullYear())
@@ -48,13 +50,21 @@ export default function DatePicker({ value, onChange, placeholder = 'DD-MM-YYYY'
   }
 
   useEffect(() => {
+    if (autoOpen) handleOpen()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpen])
+
+  useEffect(() => {
     if (!open) return
     function outside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+        onClose?.()
+      }
     }
     document.addEventListener('mousedown', outside)
     return () => document.removeEventListener('mousedown', outside)
-  }, [open])
+  }, [open, onClose])
 
   function selectDay(day: number) {
     onChange(`${fmt2(day)}-${fmt2(viewMonth + 1)}-${viewYear}`)

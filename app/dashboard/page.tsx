@@ -1323,22 +1323,24 @@ export default function Dashboard() {
                             </div>
                             <div className="photo-meta" onClick={e => e.stopPropagation()}>
                               {editingPhotoId === photo.id ? (
-                                <input
-                                  type="date"
-                                  className="photo-date-input"
+                                <DatePicker
+                                  autoOpen
                                   value={photoDraftDate}
-                                  onChange={e => setPhotoDraftDate(e.target.value)}
-                                  onBlur={() => savePhotoDate(photo.id, photoDraftDate)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') savePhotoDate(photo.id, photoDraftDate)
-                                    if (e.key === 'Escape') setEditingPhotoId(null)
+                                  onChange={val => {
+                                    // DatePicker gives DD-MM-YYYY, convert to YYYY-MM-DD for DB
+                                    const dbDate = val.split('-').reverse().join('-')
+                                    savePhotoDate(photo.id, dbDate)
                                   }}
-                                  autoFocus
+                                  onClose={() => setEditingPhotoId(null)}
                                 />
                               ) : (
                                 <span
                                   className={`photo-date-label${role === 'admin' ? ' editable' : ''}`}
-                                  onClick={role === 'admin' ? () => { setEditingPhotoId(photo.id); setPhotoDraftDate(displayDate) } : undefined}
+                                  onClick={role === 'admin' ? () => {
+                                    // Convert YYYY-MM-DD → DD-MM-YYYY for DatePicker
+                                    setEditingPhotoId(photo.id)
+                                    setPhotoDraftDate(displayDate.split('-').reverse().join('-'))
+                                  } : undefined}
                                 >
                                   {fmtDate(displayDate)}
                                 </span>

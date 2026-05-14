@@ -1195,12 +1195,6 @@ input[type="checkbox"] {
   cursor: pointer; border-bottom: 1px dashed var(--border-strong);
 }
 .photo-date-label.editable:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.photo-date-input {
-  width: 100%; font-size: 10px; font-family: var(--mono);
-  border: 1px solid var(--accent); border-radius: 4px;
-  padding: 2px 4px; background: var(--surface); color: var(--text);
-  outline: none;
-}
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .section-title-nowrap { margin-bottom: 0; }
 .btn-sm {
