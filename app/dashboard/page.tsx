@@ -926,6 +926,16 @@ export default function Dashboard() {
           <div className="table-card">
             <div className="table-scroll">
             <table>
+              <colgroup>
+                {role === 'admin' && <col style={{ width: '36px' }} />}
+                <col style={{ width: '52px' }} />
+                <col />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '130px' }} />
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '110px' }} />
+                <col style={{ width: '160px' }} />
+              </colgroup>
               <thead>
                 <tr>
                   {role === 'admin' && (
