@@ -140,6 +140,7 @@ export default function Dashboard() {
   // ── Panel draft state ──
   const [draft, setDraft] = useState<Record<string, string>>({})
   const [pendingPhotoDeletes, setPendingPhotoDeletes] = useState<Set<string>>(new Set())
+  const [pendingPhotoDates, setPendingPhotoDates] = useState<Map<string, string>>(new Map())
   const [photoUploadedSinceOpen, setPhotoUploadedSinceOpen] = useState(false)
   const [panelSaving, setPanelSaving] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -225,7 +226,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setDraft({}); setEditingField(null)
-    setPendingPhotoDeletes(new Set()); setPhotoUploadedSinceOpen(false)
+    setPendingPhotoDeletes(new Set()); setPendingPhotoDates(new Map()); setPhotoUploadedSinceOpen(false)
     pendingNewUserName.current = ''; assignedToWasBlank.current = false
     setUhAddOpen(false); setEditingUh(null)
     setLogAddOpen(false); setEditingLog(null); setLogInput(''); setLogAddDate('')
@@ -563,8 +564,8 @@ export default function Dashboard() {
     setPendingPhotoDeletes(prev => new Set([...prev, photo.id]))
   }
 
-  async function savePhotoDate(photoId: string, newDate: string) {
-    await supabase.from('item_photos').update({ photo_date: newDate || null }).eq('id', photoId)
+  function savePhotoDate(photoId: string, newDate: string) {
+    setPendingPhotoDates(prev => new Map([...prev, [photoId, newDate || '']]))
     setPhotos(prev => prev.map(p => p.id === photoId ? { ...p, photo_date: newDate || null } : p).sort(sortPhotos))
     setEditingPhotoId(null)
   }
@@ -641,6 +642,11 @@ export default function Dashboard() {
       }
     }
 
+    // 3b. Flush staged photo date edits
+    for (const [photoId, date] of pendingPhotoDates) {
+      await supabase.from('item_photos').update({ photo_date: date || null }).eq('id', photoId)
+    }
+
     // 4. Flush item field draft
     const payload: Record<string, unknown> = {
       name,
@@ -667,6 +673,7 @@ export default function Dashboard() {
     setItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...payload } : i))
     setDraft({})
     setPendingPhotoDeletes(new Set())
+    setPendingPhotoDates(new Map())
     setPhotoUploadedSinceOpen(false)
     await Promise.all([
       loadUserHistory(selectedItem.id),
@@ -781,6 +788,7 @@ export default function Dashboard() {
     userHistory.some(h => h._staged) ||
     logs.some(l => l._staged) ||
     pendingPhotoDeletes.size > 0 ||
+    pendingPhotoDates.size > 0 ||
     photoUploadedSinceOpen
 
   const retiredCount = items.filter(i => i.status === 'Retired').length
