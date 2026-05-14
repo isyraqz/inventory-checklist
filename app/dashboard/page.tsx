@@ -797,7 +797,7 @@ export default function Dashboard() {
               <div className="stat-value">{total}</div>
             </div>
             {role === 'admin' && (
-              <div className="stat-card stat-card-inuse">
+              <div className={`stat-card stat-card-inuse${auditChecked.size > 0 ? ' stat-card-active' : ''}`}>
                 <div className="stat-label">Checked In</div>
                 <div className="stat-value">{checkedCount}</div>
                 <div className="stat-sub">{pct}% verified</div>
