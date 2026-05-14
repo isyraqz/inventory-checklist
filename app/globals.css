@@ -420,12 +420,12 @@ body::after {
 
 /* Row clickable */
 tbody tr { cursor: pointer; }
-/* Selected row — brown tint + left accent bar (Option A) */
-tbody tr.row-selected td { background: rgba(139,69,19,0.10); }
-tbody tr.row-selected td:first-child { border-left: 3px solid #8B4513; padding-left: 9px; }
+/* Selected row — brown tint + inset left accent (box-shadow survives border-collapse) */
+tbody tr.row-selected td { background: rgba(139,69,19,0.12); }
+tbody tr.row-selected td:first-child { box-shadow: inset 3px 0 0 #8B4513; }
 
-[data-theme="dark"] tbody tr.row-selected td { background: rgba(196,106,48,0.14); }
-[data-theme="dark"] tbody tr.row-selected td:first-child { border-left: 3px solid #C46A30; padding-left: 9px; }
+[data-theme="dark"] tbody tr.row-selected td { background: rgba(196,106,48,0.16); }
+[data-theme="dark"] tbody tr.row-selected td:first-child { box-shadow: inset 3px 0 0 #C46A30; }
 
 /* ── Stats ── */
 .stats-row {
