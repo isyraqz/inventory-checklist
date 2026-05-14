@@ -154,6 +154,8 @@ export default function Dashboard() {
   const [photosLoading, setPhotosLoading] = useState(false)
   const [photoUploading, setPhotoUploading] = useState(false)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null)
+  const [photoDraftDate, setPhotoDraftDate] = useState('')
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   const toastId = useRef(0)
@@ -189,10 +191,21 @@ export default function Dashboard() {
     setUhLoading(false)
   }, [supabase])
 
+  function sortPhotos(a: ItemPhoto, b: ItemPhoto) {
+    const da = a.photo_date ?? a.uploaded_at.slice(0, 10)
+    const db = b.photo_date ?? b.uploaded_at.slice(0, 10)
+    return db.localeCompare(da)
+  }
+
   const loadPhotos = useCallback(async (itemId: string) => {
     setPhotosLoading(true)
-    const { data } = await supabase.from('item_photos').select('*').eq('item_id', itemId).order('uploaded_at', { ascending: false })
-    setPhotos((data as ItemPhoto[]) || [])
+    const { data } = await supabase.from('item_photos').select('*').eq('item_id', itemId)
+    const sorted = ((data as ItemPhoto[]) || []).sort((a, b) => {
+      const da = a.photo_date ?? a.uploaded_at.slice(0, 10)
+      const db = b.photo_date ?? b.uploaded_at.slice(0, 10)
+      return db.localeCompare(da)
+    })
+    setPhotos(sorted)
     setPhotosLoading(false)
   }, [supabase])
 
@@ -538,7 +551,8 @@ export default function Dashboard() {
     const { error: upErr } = await supabase.storage.from('item-photos').upload(path, file)
     if (upErr) { toast('Upload failed: ' + upErr.message); setPhotoUploading(false); return }
     const { data: { publicUrl } } = supabase.storage.from('item-photos').getPublicUrl(path)
-    await supabase.from('item_photos').insert({ item_id: selectedItem.id, user_id: user.id, storage_path: path, url: publicUrl })
+    const today = new Date().toISOString().slice(0, 10)
+    await supabase.from('item_photos').insert({ item_id: selectedItem.id, user_id: user.id, storage_path: path, url: publicUrl, photo_date: today })
     await loadPhotos(selectedItem.id)
     setPhotoUploading(false)
     setPhotoUploadedSinceOpen(true)
@@ -547,6 +561,12 @@ export default function Dashboard() {
   function deletePhoto(photo: ItemPhoto) {
     // Stage deletion — actual storage/DB removal happens on panel Save
     setPendingPhotoDeletes(prev => new Set([...prev, photo.id]))
+  }
+
+  async function savePhotoDate(photoId: string, newDate: string) {
+    await supabase.from('item_photos').update({ photo_date: newDate || null }).eq('id', photoId)
+    setPhotos(prev => prev.map(p => p.id === photoId ? { ...p, photo_date: newDate || null } : p).sort(sortPhotos))
+    setEditingPhotoId(null)
   }
 
   const DATE_FIELDS = new Set(['date_acquired', 'purchased_date', 'warranty_exp', 'last_checked'])
@@ -1290,15 +1310,43 @@ export default function Dashboard() {
                       <p className="photos-loading">No photos yet.</p>
                     ) : (
                       <div className="photos-grid">
-                        {photos.filter(p => !pendingPhotoDeletes.has(p.id)).map(photo => (
-                          <div key={photo.id} className="photo-thumb" onClick={() => setLightbox(photo.url)}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={photo.url} alt="" className="photo-img" />
-                            {role === 'admin' && (
-                              <button type="button" onClick={e => { e.stopPropagation(); deletePhoto(photo) }} className="photo-del">✕</button>
-                            )}
+                        {photos.filter(p => !pendingPhotoDeletes.has(p.id)).map(photo => {
+                          const displayDate = photo.photo_date ?? photo.uploaded_at.slice(0, 10)
+                          return (
+                          <div key={photo.id} className="photo-card">
+                            <div className="photo-thumb" onClick={() => setLightbox(photo.url)}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={photo.url} alt="" className="photo-img" />
+                              {role === 'admin' && (
+                                <button type="button" onClick={e => { e.stopPropagation(); deletePhoto(photo) }} className="photo-del">✕</button>
+                              )}
+                            </div>
+                            <div className="photo-meta" onClick={e => e.stopPropagation()}>
+                              {editingPhotoId === photo.id ? (
+                                <input
+                                  type="date"
+                                  className="photo-date-input"
+                                  value={photoDraftDate}
+                                  onChange={e => setPhotoDraftDate(e.target.value)}
+                                  onBlur={() => savePhotoDate(photo.id, photoDraftDate)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') savePhotoDate(photo.id, photoDraftDate)
+                                    if (e.key === 'Escape') setEditingPhotoId(null)
+                                  }}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className={`photo-date-label${role === 'admin' ? ' editable' : ''}`}
+                                  onClick={role === 'admin' ? () => { setEditingPhotoId(photo.id); setPhotoDraftDate(displayDate) } : undefined}
+                                >
+                                  {fmtDate(displayDate)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>

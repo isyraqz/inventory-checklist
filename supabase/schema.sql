@@ -34,7 +34,8 @@ create table public.item_photos (
   user_id      uuid references auth.users(id) not null,
   storage_path text not null,
   url          text not null,
-  uploaded_at  timestamptz not null default now()
+  uploaded_at  timestamptz not null default now(),
+  photo_date   date null
 );
 
 alter table public.item_photos enable row level security;

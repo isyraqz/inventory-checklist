@@ -1172,7 +1172,8 @@ input[type="checkbox"] {
 /* Photos section */
 .photos-loading { font-size: 11px; color: var(--text-hint); }
 .photos-empty { font-size: 11px; color: var(--text-hint); }
-.photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.photo-card { display: flex; flex-direction: column; gap: 4px; }
 .photo-thumb {
   position: relative; aspect-ratio: 1; border-radius: 8px;
   overflow: hidden; cursor: pointer; border: 1px solid var(--border);
@@ -1184,6 +1185,21 @@ input[type="checkbox"] {
   background: rgba(0,0,0,0.55); border: none;
   color: #fff; font-size: 11px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.photo-meta { display: flex; justify-content: center; }
+.photo-date-label {
+  font-size: 10px; color: var(--text-hint); font-family: var(--mono);
+  letter-spacing: 0.02em; line-height: 1;
+}
+.photo-date-label.editable {
+  cursor: pointer; border-bottom: 1px dashed var(--border-strong);
+}
+.photo-date-label.editable:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.photo-date-input {
+  width: 100%; font-size: 10px; font-family: var(--mono);
+  border: 1px solid var(--accent); border-radius: 4px;
+  padding: 2px 4px; background: var(--surface); color: var(--text);
+  outline: none;
 }
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .section-title-nowrap { margin-bottom: 0; }

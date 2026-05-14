@@ -61,6 +61,7 @@ export interface ItemPhoto {
   storage_path: string
   url: string
   uploaded_at: string
+  photo_date: string | null
 }
 
 export interface UserHistory {
