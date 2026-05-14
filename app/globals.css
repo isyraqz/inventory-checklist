@@ -11,10 +11,10 @@
   --text:         #1C1917;
   --text-muted:   #44403C;
   --text-hint:    #78716C;
-  --accent:       #C4956A;
+  --accent:       #8B4513;
   --accent-fg:    #FFFFFF;
-  --accent-hover: #A67C52;
-  --accent-glow:  rgba(196,149,106,0.25);
+  --accent-hover: #7A3B10;
+  --accent-glow:  rgba(139,69,19,0.25);
   --destructive:  #DC2626;
   --radius:       6px;
   --radius-lg:    10px;
@@ -53,10 +53,10 @@
   --text:         #EDE9E4;
   --text-muted:   #C9C0B5;
   --text-hint:    #8C7E70;
-  --accent:       #D4A574;
+  --accent:       #C46A30;
   --accent-fg:    #FFFFFF;
-  --accent-hover: #C4956A;
-  --accent-glow:  rgba(212,165,116,0.3);
+  --accent-hover: #B05A25;
+  --accent-glow:  rgba(196,106,48,0.3);
   --destructive:  #F87171;
   --shadow:       0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
   --shadow-md:    0 4px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
@@ -161,7 +161,7 @@ body::after {
 
 /* Logo SVG — always on dark header in light, dark header inverted in dark */
 .logo-svg { flex-shrink: 0; }
-.logo-svg path:first-child { fill: rgba(196,149,106,0.18); stroke: var(--accent); }
+.logo-svg path:first-child { fill: rgba(139,69,19,0.18); stroke: var(--accent); }
 .logo-svg path:nth-child(2) { stroke: var(--accent); fill: none; }
 .logo-svg path:last-child { stroke: rgba(245,240,232,0.45); fill: none; }
 
@@ -204,15 +204,15 @@ body::after {
   font-size: 11px;
   font-weight: 700;
   font-family: var(--mono);
-  color: #D4A574;
+  color: #C46A30;
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  background: rgba(196,149,106,0.15);
+  background: rgba(139,69,19,0.15);
   padding: 4px 10px;
   border-radius: 20px;
-  border: 1px solid rgba(196,149,106,0.22);
+  border: 1px solid rgba(139,69,19,0.22);
   transition: color 0.25s, background 0.25s;
 }
 [data-theme="dark"] .user-email {
