@@ -310,7 +310,7 @@ export default function Dashboard() {
       setEditId(item.id)
       setForm({
         name: item.name, brand: item.brand ?? '', serial: item.serial,
-        status: item.status, condition: item.condition, assigned_to: item.assigned_to,
+        status: item.status, condition: item.condition, assigned_to: item.assigned_to, assignee: item.assignee ?? '',
         category: item.category, department: item.department ?? '',
         date_acquired: toFormDate(item.date_acquired),
         purchased_date: toFormDate(item.purchased_date),
