@@ -23,6 +23,7 @@ export interface Item {
   status: ItemStatus
   condition: Condition
   assigned_to: string
+  assignee: string
   category: Category
   department: string
   date_acquired: string | null
@@ -44,6 +45,7 @@ export type ItemFormData = {
   status: ItemStatus
   condition: Condition
   assigned_to: string
+  assignee: string
   category: Category
   department: string
   date_acquired: string

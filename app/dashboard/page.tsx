@@ -9,7 +9,7 @@ import ChartPanel from '@/components/ChartPanel'
 
 const EMPTY_FORM: ItemFormData = {
   name: '', brand: '', serial: '', status: 'In use', condition: 'Good',
-  assigned_to: '', category: 'IT', department: '', date_acquired: '',
+  assigned_to: '', assignee: '', category: 'IT', department: '', date_acquired: '',
   purchased_date: '', warranty_exp: '', last_checked: '', remarks: '', checked: false,
 }
 
@@ -338,7 +338,7 @@ export default function Dashboard() {
 
     const payload = {
       name: form.name, brand: form.brand, serial: form.serial, status: form.status,
-      condition: form.condition, assigned_to: assignedTo, category: form.category,
+      condition: form.condition, assigned_to: assignedTo, assignee: form.assignee ?? '', category: form.category,
       department: form.department, date_acquired: assignedDateDB,
       purchased_date: toDBDate(form.purchased_date) || null,
       warranty_exp: toDBDate(form.warranty_exp) || null,
@@ -655,6 +655,7 @@ export default function Dashboard() {
       status: draft.status ?? selectedItem.status,
       condition: draft.condition ?? selectedItem.condition,
       assigned_to: draft.assigned_to ?? selectedItem.assigned_to,
+      assignee: draft.assignee ?? selectedItem.assignee ?? '',
       category: draft.category ?? selectedItem.category,
       department: draft.department ?? selectedItem.department ?? '',
       date_acquired: 'date_acquired' in draft ? (toDBDate(draft.date_acquired) || null) : selectedItem.date_acquired,
@@ -1153,33 +1154,15 @@ export default function Dashboard() {
                     <div className="detail-row"><span className="detail-key">Assignee</span>
                       {editingField === 'assignee'
                         ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
-                            onBlur={() => {
-                              const newVal = editingValue.trim()
-                              if (assignedToWasBlank.current && newVal) {
-                                setDraft(d => ({ ...d, assigned_to: editingValue, status: 'In use' }))
-                                setEditingField(null)
-                                pendingNewUserName.current = newVal
-                                setTimeout(() => startEdit('date_acquired', selectedItem.date_acquired), 0)
-                              } else if (!assignedToWasBlank.current && newVal) {
-                                commitToDraft('assigned_to', editingValue)
-                                const openEntry = userHistory.find(h => !h.date_to && h._staged !== 'delete')
-                                if (openEntry) {
-                                  setUserHistory(prev => prev.map(h => h.id === openEntry.id
-                                    ? { ...h, user_name: newVal, _staged: h._staged === 'add' ? 'add' : 'edit' as const }
-                                    : h))
-                                }
-                              } else {
-                                commitToDraft('assigned_to', editingValue)
-                              }
-                            }}
+                            onBlur={() => commitToDraft('assignee', editingValue)}
                             onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
                             className="panel-inline-input-r" />
                         : (() => {
-                            const effectiveAssigned = draft.assigned_to ?? selectedItem.assigned_to
-                            return effectiveAssigned
-                              ? <span className={`detail-val${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => { if (role === 'admin') { assignedToWasBlank.current = !effectiveAssigned; setEditingField('assignee'); setEditingValue(effectiveAssigned ?? '') } }}>{effectiveAssigned}</span>
+                            const effectiveAssignee = draft.assignee ?? selectedItem.assignee
+                            return effectiveAssignee
+                              ? <span className={`detail-val${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => role === 'admin' && startEdit('assignee', selectedItem.assignee)}>{effectiveAssignee}</span>
                               : role === 'admin'
-                                ? <span onClick={() => { assignedToWasBlank.current = true; setEditingField('assignee'); setEditingValue('') }} className="add-user-link">＋ Add new user</span>
+                                ? <span onClick={() => startEdit('assignee', '')} className="add-user-link">＋ Add assignee</span>
                                 : <span className="detail-val">—</span>
                           })()}
                     </div>
