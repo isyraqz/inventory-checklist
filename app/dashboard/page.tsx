@@ -1149,6 +1149,14 @@ export default function Dashboard() {
                           })()}
                     </div>
 
+                    {/* Assignee */}
+                    <div className="detail-row">
+                      <span className="detail-key">Assignee</span>
+                      <span className="detail-val">
+                        {(() => { const a = draft.assigned_to ?? selectedItem.assigned_to; return a || '—' })()}
+                      </span>
+                    </div>
+
                     {/* Assigned date */}
                     <div className="detail-row"><span className="detail-key">Assigned date</span>
                       {editingField === 'date_acquired'
