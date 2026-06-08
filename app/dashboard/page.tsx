@@ -1150,11 +1150,38 @@ export default function Dashboard() {
                     </div>
 
                     {/* Assignee */}
-                    <div className="detail-row">
-                      <span className="detail-key">Assignee</span>
-                      <span className="detail-val">
-                        {(() => { const a = draft.assigned_to ?? selectedItem.assigned_to; return a || '—' })()}
-                      </span>
+                    <div className="detail-row"><span className="detail-key">Assignee</span>
+                      {editingField === 'assignee'
+                        ? <input autoFocus type="text" value={editingValue} onChange={e => setEditingValue(e.target.value)}
+                            onBlur={() => {
+                              const newVal = editingValue.trim()
+                              if (assignedToWasBlank.current && newVal) {
+                                setDraft(d => ({ ...d, assigned_to: editingValue, status: 'In use' }))
+                                setEditingField(null)
+                                pendingNewUserName.current = newVal
+                                setTimeout(() => startEdit('date_acquired', selectedItem.date_acquired), 0)
+                              } else if (!assignedToWasBlank.current && newVal) {
+                                commitToDraft('assigned_to', editingValue)
+                                const openEntry = userHistory.find(h => !h.date_to && h._staged !== 'delete')
+                                if (openEntry) {
+                                  setUserHistory(prev => prev.map(h => h.id === openEntry.id
+                                    ? { ...h, user_name: newVal, _staged: h._staged === 'add' ? 'add' : 'edit' as const }
+                                    : h))
+                                }
+                              } else {
+                                commitToDraft('assigned_to', editingValue)
+                              }
+                            }}
+                            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingField(null) }}
+                            className="panel-inline-input-r" />
+                        : (() => {
+                            const effectiveAssigned = draft.assigned_to ?? selectedItem.assigned_to
+                            return effectiveAssigned
+                              ? <span className={`detail-val${role === 'admin' ? ' cursor-text' : ''}`} onClick={() => { if (role === 'admin') { assignedToWasBlank.current = !effectiveAssigned; setEditingField('assignee'); setEditingValue(effectiveAssigned ?? '') } }}>{effectiveAssigned}</span>
+                              : role === 'admin'
+                                ? <span onClick={() => { assignedToWasBlank.current = true; setEditingField('assignee'); setEditingValue('') }} className="add-user-link">＋ Add new user</span>
+                                : <span className="detail-val">—</span>
+                          })()}
                     </div>
 
                     {/* Assigned date */}
